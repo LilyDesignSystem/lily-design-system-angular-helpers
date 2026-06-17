@@ -1,7 +1,7 @@
 {
-  "name": "lily-design-system-angular-locale-select",
+  "name": "lily-design-system-angular-text-size-select",
   "version": "0.1.0",
-  "description": "Lily Design System - Angular 20 locale picker",
+  "description": "Lily Design System - Angular 20 text-size picker",
   "peerDependencies": {
     "@angular/core": ">=20.0.0 <22.0.0",
     "@angular/common": ">=20.0.0 <22.0.0"
@@ -16,7 +16,7 @@
     "design",
     "system",
     "angular",
-    "locale",
+    "text-size",
     "picker"
   ],
   "author": "joel@joelparkerhenderson.com",
