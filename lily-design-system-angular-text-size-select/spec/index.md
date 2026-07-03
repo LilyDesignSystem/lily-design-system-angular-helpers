@@ -7,7 +7,7 @@ spec-driven-development style: anything not in this spec is out of
 scope; anything in this spec must be exercised by a test.
 
 This is the Angular port of the canonical Svelte contract in
-[`../../lily-design-system-svelte-helpers/lily-design-system-svelte-text-size-select/spec.md`](../../lily-design-system-svelte-helpers/lily-design-system-svelte-text-size-select/spec.md).
+[`../../lily-design-system-svelte-helpers/lily-design-system-svelte-text-size-select/spec/index.md`](../../../lily-design-system-svelte-helpers/lily-design-system-svelte-text-size-select/spec/index.md).
 When the Angular port and the Svelte canonical disagree, the Svelte
 side wins and the Angular side is patched.
 
@@ -22,7 +22,7 @@ Sibling files in this directory:
 
 ## 1. Goal
 
-Give an Angular 20 application a drop-in, headless text-size picker
+Give an Angular 20 application a drop-in, headless text-size select
 that:
 
 1. Renders an accessible native `<select>` of available size slugs.
@@ -72,7 +72,7 @@ that:
 | `target`       | `input<HTMLElement \| null>()` | no       | `null` (→ `document.documentElement`) | Element that receives `data-text-size`. |
 | `sizeLabels`   | `input<Record<string,string>>()` | no     | `{}`                                  | Optional pretty labels per size slug. |
 | `className`    | `input<string>()`              | no       | `""`                                  | Extra CSS class on the `<select>` root. |
-| `sizeChange`   | `output<string>()`             | no       | —                                     | Emits after the picker applies a new size. |
+| `sizeChange`   | `output<string>()`             | no       | —                                     | Emits after the select applies a new size. |
 
 ### 4.2 DOM contract
 
@@ -191,4 +191,4 @@ below. Tests run under vitest + jsdom + `@angular/core/testing`
 - License: MIT or Apache-2.0 or GPL-2.0 or GPL-3.0 or BSD-3-Clause
   (or contact for other terms)
 - Contact: Joel Parker Henderson &lt;joel@joelparkerhenderson.com&gt;
-- Canonical contract: [`../../lily-design-system-svelte-helpers/lily-design-system-svelte-text-size-select/spec.md`](../../lily-design-system-svelte-helpers/lily-design-system-svelte-text-size-select/spec.md)
+- Canonical contract: [`../../lily-design-system-svelte-helpers/lily-design-system-svelte-text-size-select/spec/index.md`](../../../lily-design-system-svelte-helpers/lily-design-system-svelte-text-size-select/spec/index.md)

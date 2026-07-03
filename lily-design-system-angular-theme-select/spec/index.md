@@ -23,7 +23,7 @@ loading lifecycle.
 
 ## 1. Goal
 
-Give an Angular 20 application a drop-in, headless theme picker that:
+Give an Angular 20 application a drop-in, headless theme select that:
 
 1. Renders an accessible native `<select>` of available themes.
 2. **Loads themes dynamically at runtime** from a developer-specified
@@ -60,9 +60,9 @@ Give an Angular 20 application a drop-in, headless theme picker that:
   `model<string>()` for two-way binding. The rendered control is a
   native `<select>`.
 - **`OnPush` change detection** to match the headless library.
-- **One `<link>` per picker name.** Switching themes mutates `href`
+- **One `<link>` per select name.** Switching themes mutates `href`
   on a single `<link rel="stylesheet"
-  data-lily-theme-select="{name}">`. Multiple pickers can coexist by
+  data-lily-theme-select="{name}">`. Multiple selects can coexist by
   passing distinct `name` inputs.
 - **`data-theme` attribute is the activation switch.** Theme CSS
   files scope their `:root[data-theme="slug"]` rules so authors can
@@ -98,7 +98,7 @@ Give an Angular 20 application a drop-in, headless theme picker that:
 | `target`        | `input<HTMLElement \| null>()`      | no       | `null` (→ `document.documentElement`) | Element that receives `data-theme`. |
 | `themeLabels`   | `input<Record<string, string>>()`   | no       | `{}`                             | Optional pretty labels per slug. |
 | `className`     | `input<string>()`                   | no       | `""`                             | Extra CSS class on the `<select>` root. |
-| `themeChange`   | `output<string>()`                  | no       | —                                | Emits after the picker applies a new theme. |
+| `themeChange`   | `output<string>()`                  | no       | —                                | Emits after the select applies a new theme. |
 
 ### 4.2 DOM contract
 
@@ -109,7 +109,7 @@ Give an Angular 20 application a drop-in, headless theme picker that:
   `<select>` value is bound to the resolved `value`, so the matching
   option is selected.
 - `labelFor(slug)` returns `themeLabels[slug]` when supplied;
-  otherwise the slug with its first character upper-cased. The picker
+  otherwise the slug with its first character upper-cased. The select
   never emits the word "default".
 - A single managed `<link rel="stylesheet"
   data-lily-theme-select="{name}">` in `document.head`. Created on
@@ -149,7 +149,7 @@ non-empty value of:
 3. `defaultValue`
 4. `"light"` (if `"light"` is in `themes`)
 5. `themes[0]`
-6. `""` (no apply happens — the picker waits for user interaction)
+6. `""` (no apply happens — the select waits for user interaction)
 
 Resolution writes back to `value` (via `value.set(...)`) so consumers
 observing the two-way binding see the resolved value.

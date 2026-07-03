@@ -20,7 +20,7 @@ Sibling files in this directory:
 
 ## 1. Goal
 
-Give an Angular 20 application a drop-in, headless locale picker that:
+Give an Angular 20 application a drop-in, headless locale select that:
 
 1. Renders an accessible native `<select>` of available locales.
 2. **Applies the chosen locale** by setting `lang="…"` and
@@ -90,10 +90,10 @@ Give an Angular 20 application a drop-in, headless locale picker that:
 | `detectFromNavigator` | `input<boolean>()`                  | no       | `false`                          | Resolve `navigator.languages` on first visit. |
 | `name`                | `input<string>()`                   | no       | `"locale"`                       | `name` attribute of the `<select>`. |
 | `target`              | `input<HTMLElement \| null>()`      | no       | `null` (→ `document.documentElement`) | Element that receives `lang` and `dir`. |
-| `applyDir`            | `input<boolean>()`                  | no       | `true`                           | If false, the picker only writes `lang`. |
+| `applyDir`            | `input<boolean>()`                  | no       | `true`                           | If false, the select only writes `lang`. |
 | `localeLabels`        | `input<Record<string, string>>()`   | no       | `{}`                             | Optional pretty labels per locale code. |
 | `className`           | `input<string>()`                   | no       | `""`                             | Extra CSS class on the `<select>` root. |
-| `localeChange`        | `output<string>()`                  | no       | —                                | Emits after the picker applies a new locale (consumer-form code). |
+| `localeChange`        | `output<string>()`                  | no       | —                                | Emits after the select applies a new locale (consumer-form code). |
 
 ### 4.2 DOM contract
 
@@ -280,10 +280,10 @@ below. Tests run under vitest + jsdom + `@angular/core/testing`
     initial-value resolution skips storage, navigator detection,
     and defaults.
 20. When `detectFromNavigator` is true and `navigator.languages`
-    contains a supported locale, the picker resolves to that
+    contains a supported locale, the select resolves to that
     locale.
 21. When `detectFromNavigator` is true and only a language-only
-    match is available, the picker resolves to the base-language
+    match is available, the select resolves to the base-language
     locale.
 
 ### 7.5 Class hook
@@ -311,5 +311,5 @@ below. Tests run under vitest + jsdom + `@angular/core/testing`
 - License: MIT or Apache-2.0 or GPL-2.0 or GPL-3.0 or BSD-3-Clause
   (or contact for other terms)
 - Contact: Joel Parker Henderson &lt;joel@joelparkerhenderson.com&gt;
-- Canonical locale list: [locales.tsv](./locales.tsv) — 436 codes
+- Canonical locale list: [locales.tsv](../locales.tsv) — 436 codes
   with English names.
