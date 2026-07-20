@@ -1,14 +1,22 @@
 /*
-    10. Combobox with native <datalist> type-ahead.
+    Combobox with native <datalist> type-ahead.
 
-    For long locale lists (50+) where a radio group is impractical
-    and a plain <select> is too tedious to scroll. Uses an
-    `<input list>` + `<datalist>` for native, accessible type-ahead.
-    The select validates the typed value against the supported set
-    before applying.
+    For long locale lists (50+) where the helper's own listbox is
+    impractical to scroll. The helper ships a listbox, not a combobox:
+    its only text-driven affordance is the APG prefix typeahead, which
+    does not filter. So here we hide the helper's UI entirely and drive
+    its [(value)] from an `<input list>` + `<datalist>` instead.
 
     Outcome: type "Fr" — the combobox shows "Français", "Français
     (Canada)", "Frisian", etc. Pick one and the select applies.
+
+    Note on `className="locale-select-hidden"`: the helper still owns
+    lang/dir/storage/localeChange, but its button and listbox must be
+    hidden COMPLETELY here — `display: none`, not an `.sr-only`
+    clip-path recipe. The datalist input below is the real control; a
+    visually-hidden-but-AT-exposed globe button would give screen-reader
+    and keyboard users a second, duplicate language control that does
+    the same job.
 
     Browser support note: native <datalist> is widely supported but
     iOS Safari's UX is limited. For a fully APG-compliant combobox,
@@ -37,7 +45,7 @@ import { defaultLocaleLabels } from "../locales";
             [locales]="locales()"
             [(value)]="locale"
             storageKey="combobox-locale"
-            className="sr-only"
+            className="locale-select-hidden"
         />
 
         <label class="locale-select-combobox-label">

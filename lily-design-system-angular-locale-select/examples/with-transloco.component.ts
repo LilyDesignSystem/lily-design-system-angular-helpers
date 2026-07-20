@@ -1,5 +1,5 @@
 /*
-    06. Wiring Transloco.
+    Wiring Transloco.
 
     The select's bindable `value` is mirrored into Transloco's
     `TranslocoService.setActiveLang()` via the `(localeChange)` output.

@@ -1,22 +1,28 @@
 /*
-    01. Default select.
+    Default rendering: globe icon button + APG listbox.
 
-    The simplest possible mount. Each option renders with its locale's
-    pretty name (from the built-in `locales.tsv` table), carrying a
-    <option lang="…"> so screen readers pronounce each in the right
-    language.
+    The simplest possible mount. The button shows a globe glyph; press
+    it (or ArrowDown / Enter / Space) to open a listbox of three
+    options. Each option renders with its locale's pretty name (from
+    the built-in `locales.tsv` table), carrying a <li lang="…"> so
+    screen readers pronounce each in the right language.
 
-    Outcome: a select with three options. Picking one writes
-    <html lang="…" dir="…"> and updates the bindable `value` signal.
+    Outcome: picking an option writes <html lang="…" dir="…">, updates
+    the bindable `value` signal, closes the list, and returns focus to
+    the button.
+
+    Note: this package ships zero CSS, so the <ul> sits in normal flow
+    and pushes content down when open. Overlay it in your own stylesheet
+    with `position: absolute` on .locale-select-list plus
+    `position: relative` on .locale-select — see index.md.
 
     The status line is part of the basic pattern, not an add-on.
 
-    The closed control is placeholder-pinned: it always reads "Choose
-    your language", never the active locale name. That keeps it narrow,
-    but it means a screen-reader user focusing the control does not
-    hear which locale is in effect, and no option in the open list is
-    marked selected. The <p class="locale-select-status"> below
-    compensates: it names the active locale in text, for everyone.
+    The closed control shows only the globe glyph — never the active
+    locale name. So neither a sighted user nor a screen-reader user
+    can tell which locale is in effect without opening the list. The
+    <p class="locale-select-status"> below compensates: it names the
+    active locale in text, for everyone.
 
     Three deliberate choices:
 
@@ -49,7 +55,7 @@ import { ChangeDetectionStrategy, Component, signal } from "@angular/core";
 import { LocaleSelect, localeName } from "../locale-select.component";
 
 @Component({
-    selector: "example-radios",
+    selector: "example-basic",
     standalone: true,
     imports: [LocaleSelect],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,7 +71,7 @@ import { LocaleSelect, localeName } from "../locale-select.component";
         </p>
     `,
 })
-export class RadiosExample {
+export class BasicExample {
     locale = signal("en");
 
     nameFor = localeName;

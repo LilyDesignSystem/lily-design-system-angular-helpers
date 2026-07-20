@@ -1,5 +1,5 @@
 /*
-    03. Toggle-button group via a sibling widget.
+    Toggle-button group via a sibling widget.
 
     A button group renders the locales inline with `aria-pressed` to
     indicate the active locale. Use it when you want a more prominent,
@@ -8,6 +8,16 @@
 
     Outcome: a horizontal <ul> of <button>s bound to the select's
     `[(value)]` signal. The select still drives lang/dir/change.
+
+    The sibling list is class="locale-button-group", NOT
+    "locale-select-list" — that hook now belongs to the helper's own
+    <ul role="listbox">, and reusing it here would make consumer
+    popup-positioning CSS apply to this inline group too.
+
+    `className="locale-select-hidden"` must hide the helper COMPLETELY
+    (`display: none`), not with an `.sr-only` clip-path recipe: these
+    buttons are the real control, and a visually-hidden-but-AT-exposed
+    globe button would be a duplicate.
 */
 import {
     ChangeDetectionStrategy,
@@ -22,7 +32,7 @@ import {
 import { defaultLocaleLabels } from "../locales";
 
 @Component({
-    selector: "example-buttons",
+    selector: "example-sibling-buttons",
     standalone: true,
     imports: [LocaleSelect],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,10 +41,10 @@ import { defaultLocaleLabels } from "../locales";
             label="Language"
             [locales]="locales"
             [(value)]="locale"
-            className="sr-only"
+            className="locale-select-hidden"
         />
 
-        <ul class="locale-select-list" role="list">
+        <ul class="locale-button-group" role="list">
             @for (l of locales; track l) {
                 <li>
                     <button
@@ -52,7 +62,7 @@ import { defaultLocaleLabels } from "../locales";
         <p>Selected: <code>{{ locale() }}</code></p>
     `,
 })
-export class ButtonsExample {
+export class SiblingButtonsExample {
     readonly locales = ["en", "fr", "es", "de", "ar", "he"];
 
     // Short two-letter codes for compact display.

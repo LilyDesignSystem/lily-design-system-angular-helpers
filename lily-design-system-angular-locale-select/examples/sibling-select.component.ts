@@ -1,16 +1,23 @@
 /*
-    02. Native <select> rendered as a sibling widget bound to the same
+    Native <select> rendered as a sibling widget bound to the same
     [(value)] signal.
 
-    The select still owns the lifecycle (lang/dir/storage/change) but
-    we visually hide its UI and present a <select> instead. Best for
-    >~12 locales or when the design system uses dropdowns for setting
-    controls.
+    The helper still owns the lifecycle (lang/dir/storage/change) but
+    we hide its UI and present a native <select> instead. Best for
+    >~12 locales, when the design system uses dropdowns for setting
+    controls, or when you specifically want the native control's
+    platform behaviour back: OS pickers on mobile, reliable value
+    announcement, and consistent screen-reader support that a custom
+    listbox does not match. See docs/accessibility.md.
 
-    A future ThemeSelect / LocaleSelect revision will expose
-    <ng-content> projection so the slot can replace the default UI
-    in-place; today, the sibling-widget pattern is the canonical
-    workaround.
+    The helper's projected <ng-template> replaces the button glyph
+    only — it cannot replace the listbox — so swapping the whole
+    affordance means this sibling-widget pattern.
+
+    `className="locale-select-hidden"` must hide the helper COMPLETELY
+    (`display: none`), not with an `.sr-only` clip-path recipe: the
+    <select> below is the real control, and a visually-hidden-but-
+    AT-exposed globe button would be a duplicate.
 */
 import {
     ChangeDetectionStrategy,
@@ -25,19 +32,19 @@ import {
 import { defaultLocaleLabels } from "../locales";
 
 @Component({
-    selector: "example-select",
+    selector: "example-sibling-select",
     standalone: true,
     imports: [LocaleSelect],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
-        <!-- The hidden select owns the lifecycle. -->
+        <!-- The hidden helper owns the lifecycle. -->
         <lily-locale-select
             label="Language"
             [locales]="locales"
             [(value)]="locale"
             storageKey="app-locale"
             [detectFromNavigator]="true"
-            className="sr-only"
+            className="locale-select-hidden"
         />
 
         <!-- Sibling <select> bound to the same signal. -->
@@ -61,7 +68,7 @@ import { defaultLocaleLabels } from "../locales";
         <p>Selected locale: <code>{{ locale() }}</code></p>
     `,
 })
-export class SelectExample {
+export class SiblingSelectExample {
     readonly locales = [
         "en", "en_US", "en_GB",
         "fr", "fr_CA",

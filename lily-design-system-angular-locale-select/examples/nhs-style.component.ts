@@ -1,13 +1,22 @@
 /*
-    05. NHS UK-style language banner.
+    NHS UK-style language banner.
 
     Mirrors the NHS UK Design System's pattern of placing a language
     chooser in a top utility banner. The banner uses sibling-button
-    markup but with the `locale-select` class hook (via `className`)
-    so consumer CSS can target it without duplication.
+    markup; the helper itself is hidden and only drives lang/dir/storage.
 
-    Outcome: a <header> banner with the select rendered as a horizontal
+    Outcome: a <header> banner with the locales rendered as a horizontal
     button list. Each entry shows the language in its own script.
+
+    The sibling list is class="locale-button-group", NOT
+    "locale-select-list" — that hook now belongs to the helper's own
+    <ul role="listbox">, and reusing it here would make consumer
+    popup-positioning CSS apply to this inline banner group too.
+
+    `className="… locale-select-hidden"` must hide the helper COMPLETELY
+    (`display: none`), not with an `.sr-only` clip-path recipe: these
+    banner buttons are the real control, and a visually-hidden-but-
+    AT-exposed globe button would be a duplicate.
 */
 import {
     ChangeDetectionStrategy,
@@ -34,10 +43,10 @@ import {
                 [localeLabels]="NATIVE"
                 [(value)]="locale"
                 storageKey="nhs-locale"
-                className="utility-banner-languages sr-only"
+                className="utility-banner-languages locale-select-hidden"
             />
 
-            <ul class="locale-select-list" role="list">
+            <ul class="locale-button-group" role="list">
                 @for (l of locales; track l) {
                     <li>
                         <button

@@ -1,5 +1,5 @@
 /*
-    08. Analog v1 SSR with cookie persistence.
+    Analog v1 SSR with cookie persistence.
 
     No flash of default locale: the server reads the cookie via the
     INITIAL_LOCALE injection token, fills <html lang dir> via a
@@ -43,7 +43,7 @@ const INITIAL_LOCALE = new InjectionToken<string>("INITIAL_LOCALE", {
 });
 
 @Component({
-    selector: "example-ssr-cookie",
+    selector: "example-analog-cookie",
     standalone: true,
     imports: [LocaleSelect],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -126,7 +126,7 @@ const INITIAL_LOCALE = new InjectionToken<string>("INITIAL_LOCALE", {
         -->
     `,
 })
-export class SsrCookieExample {
+export class AnalogCookieExample {
     locale = signal(inject(INITIAL_LOCALE));
 
     async persistLocaleCookie(code: string): Promise<void> {

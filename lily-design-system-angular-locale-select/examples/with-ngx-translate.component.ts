@@ -1,5 +1,5 @@
 /*
-    07. Wiring ngx-translate.
+    Wiring ngx-translate.
 
     `TranslateService.use(code)` is the imperative locale switcher.
     The select calls it from its `(localeChange)` handler. Templates
