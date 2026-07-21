@@ -1,7 +1,7 @@
 {
-  "name": "lily-design-system-angular-text-size-select",
-  "version": "0.2.0",
-  "description": "Lily Design System - Angular 20 text-size select",
+  "name": "lily-design-system-angular-share-button",
+  "version": "0.1.0",
+  "description": "Lily Design System - Angular 20 share button",
   "peerDependencies": {
     "@angular/core": ">=20.0.0 <22.0.0",
     "@angular/common": ">=20.0.0 <22.0.0"
@@ -16,8 +16,8 @@
     "design",
     "system",
     "angular",
-    "text-size",
-    "select"
+    "share",
+    "button"
   ],
   "author": "joel@joelparkerhenderson.com",
   "license": "MIT"
