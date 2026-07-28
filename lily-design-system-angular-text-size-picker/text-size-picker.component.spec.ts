@@ -3,12 +3,12 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
-  TextSizeChooser,
-  TextSizeChooserIcon,
+  TextSizePicker,
+  TextSizePickerIcon,
   LATIN_CAPITAL_LETTER_A,
-  nextTextSizeChooserId,
+  nextTextSizePickerId,
   sizeName,
-} from "./text-size-chooser.component";
+} from "./text-size-picker.component";
 
 const SIZES = ["small", "medium", "large", "x-large"];
 
@@ -23,9 +23,11 @@ function resetRoot(): void {
 /** Fixtures created by a test, destroyed after it so listeners unwind. */
 let fixtures: ComponentFixture<unknown>[] = [];
 
-/** Create + render a TextSizeChooser with the supplied inputs. */
-function mount(inputs: Record<string, unknown> = {}): ComponentFixture<TextSizeChooser> {
-  const fixture = TestBed.createComponent(TextSizeChooser);
+/** Create + render a TextSizePicker with the supplied inputs. */
+function mount(
+  inputs: Record<string, unknown> = {},
+): ComponentFixture<TextSizePicker> {
+  const fixture = TestBed.createComponent(TextSizePicker);
   fixture.componentRef.setInput("label", "Text size");
   fixture.componentRef.setInput("sizes", SIZES);
   for (const [key, value] of Object.entries(inputs)) {
@@ -39,28 +41,31 @@ function mount(inputs: Record<string, unknown> = {}): ComponentFixture<TextSizeC
 /** Mount, let the initial-value effect settle, and re-render. */
 async function mountSettled(
   inputs: Record<string, unknown> = {},
-): Promise<ComponentFixture<TextSizeChooser>> {
+): Promise<ComponentFixture<TextSizePicker>> {
   const fixture = mount(inputs);
   await flush();
   fixture.detectChanges();
   return fixture;
 }
 
-function q<T extends Element>(fixture: ComponentFixture<unknown>, sel: string): T {
+function q<T extends Element>(
+  fixture: ComponentFixture<unknown>,
+  sel: string,
+): T {
   return fixture.nativeElement.querySelector(sel) as T;
 }
 
 function button(fixture: ComponentFixture<unknown>): HTMLButtonElement {
-  return q<HTMLButtonElement>(fixture, ".text-size-chooser-button");
+  return q<HTMLButtonElement>(fixture, ".text-size-picker-button");
 }
 
 function list(fixture: ComponentFixture<unknown>): HTMLUListElement {
-  return q<HTMLUListElement>(fixture, ".text-size-chooser-list");
+  return q<HTMLUListElement>(fixture, ".text-size-picker-list");
 }
 
 function options(fixture: ComponentFixture<unknown>): HTMLLIElement[] {
   return Array.from(
-    fixture.nativeElement.querySelectorAll(".text-size-chooser-option"),
+    fixture.nativeElement.querySelectorAll(".text-size-picker-option"),
   ) as HTMLLIElement[];
 }
 
@@ -107,7 +112,7 @@ afterEach(() => {
   resetRoot();
 });
 
-describe("TextSizeChooser — markup contract (§4.2, §7.1–§7.5)", () => {
+describe("TextSizePicker — markup contract (§4.2, §7.1–§7.5)", () => {
   test("§7.1 renders a button that controls a listbox", () => {
     const fixture = mount();
     const btn = button(fixture);
@@ -123,15 +128,15 @@ describe("TextSizeChooser — markup contract (§4.2, §7.1–§7.5)", () => {
 
   test("§7.1 the root is a div carrying the class hook", () => {
     const fixture = mount({ className: "extra" });
-    const root = q<HTMLElement>(fixture, ".text-size-chooser");
+    const root = q<HTMLElement>(fixture, ".text-size-picker");
     expect(root.tagName).toBe("DIV");
-    expect(root.classList.contains("text-size-chooser")).toBe(true);
+    expect(root.classList.contains("text-size-picker")).toBe(true);
     expect(root.classList.contains("extra")).toBe(true);
   });
 
   test("§7.1 the button renders 'A', hidden from assistive tech", () => {
     const fixture = mount();
-    const icon = q<HTMLElement>(fixture, ".text-size-chooser-icon");
+    const icon = q<HTMLElement>(fixture, ".text-size-picker-icon");
     // U+0041 LATIN CAPITAL LETTER A — an in-font letter, not a
     // pictograph, so it never falls back to a bitmap glyph.
     expect(icon.textContent).toBe("A");
@@ -155,7 +160,9 @@ describe("TextSizeChooser — markup contract (§4.2, §7.1–§7.5)", () => {
 
   test("§7.3 name defaults to text-size", async () => {
     const fixture = await mountSettled();
-    expect(q<HTMLInputElement>(fixture, 'input[type="hidden"]').name).toBe("text-size");
+    expect(q<HTMLInputElement>(fixture, 'input[type="hidden"]').name).toBe(
+      "text-size",
+    );
   });
 
   test("§7.3 option ids are unique per instance", () => {
@@ -167,10 +174,10 @@ describe("TextSizeChooser — markup contract (§4.2, §7.1–§7.5)", () => {
     expect(idsA.every((id) => id.length > 0)).toBe(true);
   });
 
-  test("§7.3 nextTextSizeChooserId is a monotonic counter, not random", () => {
-    const first = nextTextSizeChooserId();
-    const second = nextTextSizeChooserId();
-    expect(first).toMatch(/^text-size-chooser-\d+$/);
+  test("§7.3 nextTextSizePickerId is a monotonic counter, not random", () => {
+    const first = nextTextSizePickerId();
+    const second = nextTextSizePickerId();
+    expect(first).toMatch(/^text-size-picker-\d+$/);
     expect(second).not.toBe(first);
   });
 
@@ -204,7 +211,7 @@ describe("TextSizeChooser — markup contract (§4.2, §7.1–§7.5)", () => {
     const fixture = mount();
     click(fixture, button(fixture));
     const active = fixture.nativeElement.querySelectorAll(
-      ".text-size-chooser-option[data-active]",
+      ".text-size-picker-option[data-active]",
     ) as NodeListOf<HTMLElement>;
     expect(active.length).toBe(1);
   });
@@ -232,8 +239,10 @@ describe("TextSizeChooser — markup contract (§4.2, §7.1–§7.5)", () => {
   });
 });
 
-describe("TextSizeChooser — keyboard contract (APG listbox, §7.14–§7.18)", () => {
-  async function openWith(key: string): Promise<ComponentFixture<TextSizeChooser>> {
+describe("TextSizePicker — keyboard contract (APG listbox, §7.14–§7.18)", () => {
+  async function openWith(
+    key: string,
+  ): Promise<ComponentFixture<TextSizePicker>> {
     const fixture = await mountSettled();
     press(fixture, button(fixture), key);
     await flush();
@@ -422,7 +431,7 @@ describe("TextSizeChooser — keyboard contract (APG listbox, §7.14–§7.18)",
   });
 });
 
-describe("TextSizeChooser — size application (§5, §7.6–§7.11)", () => {
+describe("TextSizePicker — size application (§5, §7.6–§7.11)", () => {
   test("§7.6 default initial value is 'medium' when present in sizes", async () => {
     await mountSettled();
     expect(document.documentElement.dataset["textSize"]).toBe("medium");
@@ -435,7 +444,9 @@ describe("TextSizeChooser — size application (§5, §7.6–§7.11)", () => {
 
   test("§7.7 sets data-text-size on documentElement", async () => {
     await mountSettled({ defaultValue: "large" });
-    expect(document.documentElement.getAttribute("data-text-size")).toBe("large");
+    expect(document.documentElement.getAttribute("data-text-size")).toBe(
+      "large",
+    );
   });
 
   test("§7.8 selecting an option updates data-text-size and emits sizeChange", async () => {
@@ -450,7 +461,9 @@ describe("TextSizeChooser — size application (§5, §7.6–§7.11)", () => {
   test("§7.8 the hidden input tracks the selected value", async () => {
     const fixture = await mountSettled();
     await pick(fixture, "large");
-    expect(q<HTMLInputElement>(fixture, 'input[type="hidden"]').value).toBe("large");
+    expect(q<HTMLInputElement>(fixture, 'input[type="hidden"]').value).toBe(
+      "large",
+    );
   });
 
   test("§7.9 persists to localStorage and reads back on a fresh mount", async () => {
@@ -491,10 +504,10 @@ describe("TextSizeChooser — size application (§5, §7.6–§7.11)", () => {
 
 @Component({
   standalone: true,
-  imports: [TextSizeChooser, TextSizeChooserIcon],
+  imports: [TextSizePicker, TextSizePickerIcon],
   template: `
-    <lily-text-size-chooser label="Text size" [sizes]="sizes" [value]="'large'">
-      <ng-template lilyTextSizeChooserIcon let-args>
+    <lily-text-size-picker label="Text size" [sizes]="sizes" [value]="'large'">
+      <ng-template lilyTextSizePickerIcon let-args>
         <span
           data-testid="custom"
           [attr.data-open]="args.open"
@@ -503,18 +516,18 @@ describe("TextSizeChooser — size application (§5, §7.6–§7.11)", () => {
           >custom glyph</span
         >
       </ng-template>
-    </lily-text-size-chooser>
+    </lily-text-size-picker>
   `,
 })
 class IconTemplateHost {
   readonly sizes = SIZES;
 }
 
-describe("TextSizeChooser — custom icon template (§7.12–§7.13)", () => {
+describe("TextSizePicker — custom icon template (§7.12–§7.13)", () => {
   test("§7.12 className is appended to the root div", () => {
     const fixture = mount({ className: "extra" });
     expect(
-      q<HTMLElement>(fixture, ".text-size-chooser").classList.contains("extra"),
+      q<HTMLElement>(fixture, ".text-size-picker").classList.contains("extra"),
     ).toBe(true);
   });
 
@@ -528,15 +541,19 @@ describe("TextSizeChooser — custom icon template (§7.12–§7.13)", () => {
     const custom = q<HTMLElement>(fixture, '[data-testid="custom"]');
     expect(custom).toBeTruthy();
     // The custom glyph replaces the default "A" inside the button.
-    expect(custom.closest("button")?.className).toContain("text-size-chooser-button");
-    expect(fixture.nativeElement.querySelector(".text-size-chooser-icon")).toBeNull();
+    expect(custom.closest("button")?.className).toContain(
+      "text-size-picker-button",
+    );
+    expect(
+      fixture.nativeElement.querySelector(".text-size-picker-icon"),
+    ).toBeNull();
     expect(custom.getAttribute("data-open")).toBe("false");
     expect(custom.getAttribute("data-value")).toBe("large");
     expect(custom.getAttribute("data-label-x-large")).toBe("X Large");
   });
 });
 
-describe("TextSizeChooser — sizeName (§7.19)", () => {
+describe("TextSizePicker — sizeName (§7.19)", () => {
   test("sizeName title-cases each hyphen-separated word", () => {
     expect(sizeName("small")).toBe("Small");
     expect(sizeName("x-large")).toBe("X Large");
@@ -548,11 +565,15 @@ describe("TextSizeChooser — sizeName (§7.19)", () => {
 
   test("labelFor delegates to sizeName so there is one implementation", async () => {
     const fixture = await mountSettled();
-    expect(fixture.componentInstance.labelFor("x-large")).toBe(sizeName("x-large"));
+    expect(fixture.componentInstance.labelFor("x-large")).toBe(
+      sizeName("x-large"),
+    );
   });
 
   test("sizeLabels still override sizeName", async () => {
-    const fixture = await mountSettled({ sizeLabels: { large: "Comfortable" } });
+    const fixture = await mountSettled({
+      sizeLabels: { large: "Comfortable" },
+    });
     expect(fixture.componentInstance.labelFor("large")).toBe("Comfortable");
   });
 });

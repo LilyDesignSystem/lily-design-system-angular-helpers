@@ -3,13 +3,13 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
-  ThemeChooser,
+  ThemePicker,
   CIRCLE_WITH_RIGHT_HALF_BLACK,
   matchSystemTheme,
   normaliseThemesUrl,
   themeHref,
   themeName,
-} from "./theme-chooser.component";
+} from "./theme-picker.component";
 
 const THEMES = ["light", "dark", "abyss"];
 const URL_TRAILING = "/assets/themes/";
@@ -17,7 +17,7 @@ const URL_NO_TRAILING = "/assets/themes";
 
 function getManagedLink(name = "theme"): HTMLLinkElement | null {
   return document.head.querySelector<HTMLLinkElement>(
-    `link[data-lily-theme-chooser="${name}"]`,
+    `link[data-lily-theme-picker="${name}"]`,
   );
 }
 
@@ -28,9 +28,11 @@ function flush(): Promise<void> {
 /** Fixtures created by a test, destroyed after it so listeners unwind. */
 let fixtures: ComponentFixture<unknown>[] = [];
 
-/** Create + render a ThemeChooser with the supplied inputs. */
-function mount(inputs: Record<string, unknown> = {}): ComponentFixture<ThemeChooser> {
-  const fixture = TestBed.createComponent(ThemeChooser);
+/** Create + render a ThemePicker with the supplied inputs. */
+function mount(
+  inputs: Record<string, unknown> = {},
+): ComponentFixture<ThemePicker> {
+  const fixture = TestBed.createComponent(ThemePicker);
   fixture.componentRef.setInput("label", "Theme");
   fixture.componentRef.setInput("themesUrl", URL_TRAILING);
   fixture.componentRef.setInput("themes", THEMES);
@@ -45,28 +47,31 @@ function mount(inputs: Record<string, unknown> = {}): ComponentFixture<ThemeChoo
 /** Mount, let the initial-value effect settle, and re-render. */
 async function mountSettled(
   inputs: Record<string, unknown> = {},
-): Promise<ComponentFixture<ThemeChooser>> {
+): Promise<ComponentFixture<ThemePicker>> {
   const fixture = mount(inputs);
   await flush();
   fixture.detectChanges();
   return fixture;
 }
 
-function q<T extends Element>(fixture: ComponentFixture<unknown>, sel: string): T {
+function q<T extends Element>(
+  fixture: ComponentFixture<unknown>,
+  sel: string,
+): T {
   return fixture.nativeElement.querySelector(sel) as T;
 }
 
 function button(fixture: ComponentFixture<unknown>): HTMLButtonElement {
-  return q<HTMLButtonElement>(fixture, ".theme-chooser-button");
+  return q<HTMLButtonElement>(fixture, ".theme-picker-button");
 }
 
 function list(fixture: ComponentFixture<unknown>): HTMLUListElement {
-  return q<HTMLUListElement>(fixture, ".theme-chooser-list");
+  return q<HTMLUListElement>(fixture, ".theme-picker-list");
 }
 
 function options(fixture: ComponentFixture<unknown>): HTMLLIElement[] {
   return Array.from(
-    fixture.nativeElement.querySelectorAll(".theme-chooser-option"),
+    fixture.nativeElement.querySelectorAll(".theme-picker-option"),
   ) as HTMLLIElement[];
 }
 
@@ -101,7 +106,7 @@ async function pick(
 beforeEach(() => {
   document.documentElement.removeAttribute("data-theme");
   document.head
-    .querySelectorAll("link[data-lily-theme-chooser]")
+    .querySelectorAll("link[data-lily-theme-picker]")
     .forEach((n) => n.remove());
   try {
     localStorage.clear();
@@ -116,7 +121,7 @@ afterEach(() => {
   document.documentElement.removeAttribute("data-theme");
 });
 
-describe("ThemeChooser — pure helpers (§7.19)", () => {
+describe("ThemePicker — pure helpers (§7.19)", () => {
   test("normaliseThemesUrl keeps a trailing slash", () => {
     expect(normaliseThemesUrl("/a/")).toBe("/a/");
   });
@@ -131,7 +136,7 @@ describe("ThemeChooser — pure helpers (§7.19)", () => {
   });
 });
 
-describe("ThemeChooser — markup contract (§4.2, §7.1–§7.5)", () => {
+describe("ThemePicker — markup contract (§4.2, §7.1–§7.5)", () => {
   test("§7.1 renders a button that controls a listbox", () => {
     const fixture = mount();
     const btn = button(fixture);
@@ -147,15 +152,15 @@ describe("ThemeChooser — markup contract (§4.2, §7.1–§7.5)", () => {
 
   test("§7.1 the root is a div carrying the class hook", () => {
     const fixture = mount({ className: "extra" });
-    const root = q<HTMLElement>(fixture, ".theme-chooser");
+    const root = q<HTMLElement>(fixture, ".theme-picker");
     expect(root.tagName).toBe("DIV");
-    expect(root.classList.contains("theme-chooser")).toBe(true);
+    expect(root.classList.contains("theme-picker")).toBe(true);
     expect(root.classList.contains("extra")).toBe(true);
   });
 
   test("§7.1 the button renders the half-circle glyph, hidden from assistive tech", () => {
     const fixture = mount();
-    const icon = q<HTMLElement>(fixture, ".theme-chooser-icon");
+    const icon = q<HTMLElement>(fixture, ".theme-picker-icon");
     // U+25D1 CIRCLE WITH RIGHT HALF BLACK, decimal &#9681;
     expect(icon.textContent).toBe("\u25D1");
     expect(CIRCLE_WITH_RIGHT_HALF_BLACK).toBe("\u25D1");
@@ -207,7 +212,7 @@ describe("ThemeChooser — markup contract (§4.2, §7.1–§7.5)", () => {
     const fixture = mount();
     click(fixture, button(fixture));
     const active = fixture.nativeElement.querySelectorAll(
-      ".theme-chooser-option[data-active]",
+      ".theme-picker-option[data-active]",
     ) as NodeListOf<HTMLElement>;
     expect(active.length).toBe(1);
   });
@@ -231,8 +236,10 @@ describe("ThemeChooser — markup contract (§4.2, §7.1–§7.5)", () => {
   });
 });
 
-describe("ThemeChooser — keyboard contract (APG listbox, §7.14–§7.18)", () => {
-  async function openWith(key: string): Promise<ComponentFixture<ThemeChooser>> {
+describe("ThemePicker — keyboard contract (APG listbox, §7.14–§7.18)", () => {
+  async function openWith(
+    key: string,
+  ): Promise<ComponentFixture<ThemePicker>> {
     const fixture = await mountSettled();
     press(fixture, button(fixture), key);
     await flush();
@@ -407,7 +414,7 @@ describe("ThemeChooser — keyboard contract (APG listbox, §7.14–§7.18)", ()
   });
 });
 
-describe("ThemeChooser — dynamic loading (§5, §7.6–§7.11)", () => {
+describe("ThemePicker — dynamic loading (§5, §7.6–§7.11)", () => {
   test("§7.6 default initial value is 'light' when present in themes", async () => {
     await mountSettled();
     expect(document.documentElement.dataset["theme"]).toBe("light");
@@ -432,14 +439,18 @@ describe("ThemeChooser — dynamic loading (§5, §7.6–§7.11)", () => {
     fixture.componentInstance.themeChange.subscribe(onChange);
     await pick(fixture, "abyss");
     expect(document.documentElement.dataset["theme"]).toBe("abyss");
-    expect(getManagedLink()!.href.endsWith("/assets/themes/abyss.css")).toBe(true);
+    expect(getManagedLink()!.href.endsWith("/assets/themes/abyss.css")).toBe(
+      true,
+    );
     expect(onChange).toHaveBeenCalledWith("abyss");
   });
 
   test("§7.8 the hidden input tracks the selected value", async () => {
     const fixture = await mountSettled();
     await pick(fixture, "abyss");
-    expect(q<HTMLInputElement>(fixture, 'input[type="hidden"]').value).toBe("abyss");
+    expect(q<HTMLInputElement>(fixture, 'input[type="hidden"]').value).toBe(
+      "abyss",
+    );
   });
 
   test("§7.8 name discriminates the managed <link>", async () => {
@@ -456,7 +467,7 @@ describe("ThemeChooser — dynamic loading (§5, §7.6–§7.11)", () => {
 
     document.documentElement.removeAttribute("data-theme");
     document.head
-      .querySelectorAll("link[data-lily-theme-chooser]")
+      .querySelectorAll("link[data-lily-theme-picker]")
       .forEach((n) => n.remove());
 
     await mountSettled({ storageKey: "lily-theme" });
@@ -471,7 +482,9 @@ describe("ThemeChooser — dynamic loading (§5, §7.6–§7.11)", () => {
 
   test("§7.11 missing trailing slash on themesUrl still yields one slash", async () => {
     await mountSettled({ themesUrl: URL_NO_TRAILING });
-    expect(getManagedLink()!.href.endsWith("/assets/themes/light.css")).toBe(true);
+    expect(getManagedLink()!.href.endsWith("/assets/themes/light.css")).toBe(
+      true,
+    );
   });
 
   test("§7.11 a custom target receives data-theme", async () => {
@@ -486,9 +499,9 @@ describe("ThemeChooser — dynamic loading (§5, §7.6–§7.11)", () => {
 
 @Component({
   standalone: true,
-  imports: [ThemeChooser],
+  imports: [ThemePicker],
   template: `
-    <lily-theme-chooser
+    <lily-theme-picker
       label="Theme"
       [themesUrl]="url"
       [themes]="themes"
@@ -503,7 +516,7 @@ describe("ThemeChooser — dynamic loading (§5, §7.6–§7.11)", () => {
           >custom glyph</span
         >
       </ng-template>
-    </lily-theme-chooser>
+    </lily-theme-picker>
   `,
 })
 class IconTemplateHost {
@@ -511,12 +524,12 @@ class IconTemplateHost {
   readonly themes = THEMES;
 }
 
-describe("ThemeChooser — custom icon template (§7.12–§7.13)", () => {
+describe("ThemePicker — custom icon template (§7.12–§7.13)", () => {
   test("§7.12 className is appended to the root div", () => {
     const fixture = mount({ className: "extra" });
-    expect(q<HTMLElement>(fixture, ".theme-chooser").classList.contains("extra")).toBe(
-      true,
-    );
+    expect(
+      q<HTMLElement>(fixture, ".theme-picker").classList.contains("extra"),
+    ).toBe(true);
   });
 
   test("§7.13 a projected ng-template replaces the glyph and receives ChildArgs", async () => {
@@ -529,14 +542,17 @@ describe("ThemeChooser — custom icon template (§7.12–§7.13)", () => {
     const custom = q<HTMLElement>(fixture, '[data-testid="custom"]');
     expect(custom).toBeTruthy();
     // The custom glyph replaces the default half-circle inside the button.
-    expect(custom.closest("button")?.className).toContain("theme-chooser-button");
-    expect(fixture.nativeElement.querySelector(".theme-chooser-icon")).toBeNull();
+    expect(custom.closest("button")?.className).toContain(
+      "theme-picker-button",
+    );
+    expect(
+      fixture.nativeElement.querySelector(".theme-picker-icon"),
+    ).toBeNull();
     expect(custom.getAttribute("data-open")).toBe("false");
     expect(custom.getAttribute("data-value")).toBe("dark");
     expect(custom.getAttribute("data-label-light")).toBe("Light");
   });
 });
-
 
 // ---------------------------------------------------------------
 // System-preference detection (§7.20) and the exported label resolver.
@@ -564,7 +580,7 @@ function clearMatchMedia(): void {
   delete (window as unknown as MatchMediaHost).matchMedia;
 }
 
-describe("ThemeChooser — themeName (§7.19)", () => {
+describe("ThemePicker — themeName (§7.19)", () => {
   test("themeName title-cases each hyphen-separated word", () => {
     expect(themeName("high-contrast")).toBe("High Contrast");
     expect(themeName("light")).toBe("Light");
@@ -589,7 +605,7 @@ describe("ThemeChooser — themeName (§7.19)", () => {
   });
 });
 
-describe("ThemeChooser — matchSystemTheme (§7.20)", () => {
+describe("ThemePicker — matchSystemTheme (§7.20)", () => {
   afterEach(() => clearMatchMedia());
 
   test("resolves dark when the OS prefers a dark colour scheme", () => {
@@ -615,7 +631,7 @@ describe("ThemeChooser — matchSystemTheme (§7.20)", () => {
   });
 });
 
-describe("ThemeChooser — detectFromSystem (§7.20)", () => {
+describe("ThemePicker — detectFromSystem (§7.20)", () => {
   afterEach(() => clearMatchMedia());
 
   test("detectFromSystem resolves the initial theme from the OS preference", async () => {

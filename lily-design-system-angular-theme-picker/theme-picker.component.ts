@@ -35,7 +35,7 @@ export type ChildArgs = {
  * title-cased, so a slug like
  * "united-kingdom-national-health-service-england-for-patients" renders
  * as "United Kingdom National Health Service England For Patients".
- * Mirrors `localeName` in locale-chooser.
+ * Mirrors `localeName` in locale-picker.
  */
 export function themeName(theme: string): string {
   return theme
@@ -46,12 +46,15 @@ export function themeName(theme: string): string {
 
 /**
  * Resolve the OS colour-scheme preference to a supported theme slug.
- * Mirrors `matchNavigatorLanguage` in locale-chooser. Returns "" when the
+ * Mirrors `matchNavigatorLanguage` in locale-picker. Returns "" when the
  * preferred scheme is not in `themes`, or when matchMedia is unavailable
  * (SSR — jsdom does not implement it either).
  */
 export function matchSystemTheme(themes: readonly string[]): string {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+  if (
+    typeof window === "undefined" ||
+    typeof window.matchMedia !== "function"
+  ) {
     return "";
   }
   const wanted = window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -66,15 +69,19 @@ export function normaliseThemesUrl(themesUrl: string): string {
 }
 
 /** Construct the href for a given theme slug. */
-export function themeHref(themesUrl: string, slug: string, extension: string): string {
+export function themeHref(
+  themesUrl: string,
+  slug: string,
+  extension: string,
+): string {
   return normaliseThemesUrl(themesUrl) + slug + extension;
 }
 
 let uid = 0;
 /** Stable per-instance id prefix; SSR-safe (no Math.random / Date.now). */
-export function nextThemeChooserId(): string {
+export function nextThemePickerId(): string {
   uid += 1;
-  return `theme-chooser-${uid}`;
+  return `theme-picker-${uid}`;
 }
 
 /**
@@ -82,21 +89,21 @@ export function nextThemeChooserId(): string {
  * `let-` variables:
  *
  * ```html
- * <lily-theme-chooser ...>
- *   <ng-template lilyThemeChooserIcon let-args>{{ args.labelFor(args.value) }}</ng-template>
- * </lily-theme-chooser>
+ * <lily-theme-picker ...>
+ *   <ng-template lilyThemePickerIcon let-args>{{ args.labelFor(args.value) }}</ng-template>
+ * </lily-theme-picker>
  * ```
  *
  * The component queries any projected `<ng-template>`, so the marker is
  * for type-checking and readability, not for matching.
  */
 @Directive({
-  selector: "ng-template[lilyThemeChooserIcon]",
+  selector: "ng-template[lilyThemePickerIcon]",
   standalone: true,
 })
-export class ThemeChooserIcon {
+export class ThemePickerIcon {
   static ngTemplateContextGuard(
-    _dir: ThemeChooserIcon,
+    _dir: ThemePickerIcon,
     _ctx: unknown,
   ): _ctx is ChildArgs & { $implicit: ChildArgs } {
     return true;
@@ -104,7 +111,7 @@ export class ThemeChooserIcon {
 }
 
 /**
- * ThemeChooser — dynamic theme CSS loader.
+ * ThemePicker — dynamic theme CSS loader.
  *
  * Renders an icon button that opens a WAI-ARIA APG listbox of themes. On
  * every theme change the component swaps `href` on a managed
@@ -113,7 +120,7 @@ export class ThemeChooserIcon {
  * target). See `spec/index.md` for the full contract.
  */
 @Component({
-  selector: "lily-theme-chooser",
+  selector: "lily-theme-picker",
   standalone: true,
   imports: [NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -123,7 +130,7 @@ export class ThemeChooserIcon {
   template: `
     <div
       #rootEl
-      class="theme-chooser {{ className() }}"
+      class="theme-picker {{ className() }}"
       (focusout)="onRootFocusOut($event)"
     >
       <input type="hidden" [name]="name()" [value]="value()" />
@@ -131,7 +138,7 @@ export class ThemeChooserIcon {
       <button
         #buttonEl
         type="button"
-        class="theme-chooser-button"
+        class="theme-picker-button"
         [attr.aria-label]="label() || null"
         aria-haspopup="listbox"
         [attr.aria-expanded]="open()"
@@ -145,13 +152,13 @@ export class ThemeChooserIcon {
             [ngTemplateOutletContext]="childContext()"
           />
         } @else {
-          <span class="theme-chooser-icon" aria-hidden="true">{{ glyph }}</span>
+          <span class="theme-picker-icon" aria-hidden="true">{{ glyph }}</span>
         }
       </button>
 
       <ul
         #listEl
-        class="theme-chooser-list"
+        class="theme-picker-list"
         [id]="listId"
         role="listbox"
         [attr.aria-label]="label() || null"
@@ -162,19 +169,21 @@ export class ThemeChooserIcon {
       >
         @for (theme of themes(); track theme; let i = $index) {
           <li
-            class="theme-chooser-option"
+            class="theme-picker-option"
             [id]="optionId(i)"
             role="option"
             [attr.aria-selected]="theme === value()"
             [attr.data-active]="i === activeIndex() ? '' : null"
             (click)="choose(i)"
-          >{{ labelFor(theme) }}</li>
+          >
+            {{ labelFor(theme) }}
+          </li>
         }
       </ul>
     </div>
   `,
 })
-export class ThemeChooser {
+export class ThemePicker {
   readonly label = input.required<string>();
   readonly themesUrl = input.required<string>();
   readonly themes = input.required<string[]>();
@@ -193,14 +202,16 @@ export class ThemeChooser {
   /** Projected icon template; replaces the default glyph when supplied. */
   protected readonly iconTemplate = contentChild(TemplateRef);
 
-  private readonly rootRef = viewChild.required<ElementRef<HTMLDivElement>>("rootEl");
+  private readonly rootRef =
+    viewChild.required<ElementRef<HTMLDivElement>>("rootEl");
   private readonly buttonRef =
     viewChild.required<ElementRef<HTMLButtonElement>>("buttonEl");
-  private readonly listRef = viewChild.required<ElementRef<HTMLUListElement>>("listEl");
+  private readonly listRef =
+    viewChild.required<ElementRef<HTMLUListElement>>("listEl");
 
   protected readonly glyph = CIRCLE_WITH_RIGHT_HALF_BLACK;
 
-  private readonly baseId = nextThemeChooserId();
+  private readonly baseId = nextThemePickerId();
   protected readonly listId = `${this.baseId}-list`;
 
   protected readonly open = signal(false);
@@ -241,8 +252,9 @@ export class ThemeChooser {
         if (!initial && sk) {
           try {
             initial =
-              (typeof localStorage !== "undefined" ? localStorage.getItem(sk) : null) ??
-              "";
+              (typeof localStorage !== "undefined"
+                ? localStorage.getItem(sk)
+                : null) ?? "";
           } catch {
             // ignore privacy errors
           }
@@ -255,7 +267,8 @@ export class ThemeChooser {
         if (!initial) {
           const themes = this.themes();
           const dv = this.defaultValue();
-          initial = dv || (themes.includes("light") ? "light" : themes[0]) || "";
+          initial =
+            dv || (themes.includes("light") ? "light" : themes[0]) || "";
         }
 
         if (initial && initial !== current) {
@@ -317,7 +330,8 @@ export class ThemeChooser {
   private scrollActiveIntoView(): void {
     const i = this.activeIndex();
     if (i < 0) return;
-    const el = this.listRef().nativeElement.children[i] as HTMLElement | undefined;
+    const el = this.listRef().nativeElement.children[i] as
+      HTMLElement | undefined;
     // jsdom does not implement scrollIntoView; call it only if present.
     el?.scrollIntoView?.({ block: "nearest" });
   }
@@ -326,7 +340,9 @@ export class ThemeChooser {
     const count = this.themes().length;
     if (count === 0) return;
     // Clamp rather than wrap, per the APG listbox pattern.
-    this.activeIndex.set(Math.min(Math.max(this.activeIndex() + delta, 0), count - 1));
+    this.activeIndex.set(
+      Math.min(Math.max(this.activeIndex() + delta, 0), count - 1),
+    );
     this.scrollActiveIntoView();
   }
 
@@ -429,12 +445,12 @@ export class ThemeChooser {
 
   private getManagedLink(): HTMLLinkElement | null {
     if (typeof document === "undefined") return null;
-    const selector = `link[data-lily-theme-chooser="${this.name()}"]`;
+    const selector = `link[data-lily-theme-picker="${this.name()}"]`;
     let link = document.head.querySelector<HTMLLinkElement>(selector);
     if (!link) {
       link = document.createElement("link");
       link.rel = "stylesheet";
-      link.setAttribute("data-lily-theme-chooser", this.name());
+      link.setAttribute("data-lily-theme-picker", this.name());
       document.head.appendChild(link);
     }
     return link;
@@ -444,7 +460,10 @@ export class ThemeChooser {
     if (typeof document === "undefined" || !slug) return;
     const link = this.getManagedLink();
     if (link) link.href = themeHref(this.themesUrl(), slug, this.extension());
-    (this.target() ?? document.documentElement).setAttribute("data-theme", slug);
+    (this.target() ?? document.documentElement).setAttribute(
+      "data-theme",
+      slug,
+    );
 
     const sk = this.storageKey();
     if (sk) {

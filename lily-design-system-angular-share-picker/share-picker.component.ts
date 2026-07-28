@@ -18,8 +18,8 @@ import {
  *
  * An in-font arrow rather than a pictograph, matching the other helpers'
  * rule: it renders in the page's own font on every platform and stays
- * monochrome alongside theme-chooser's ◑, locale-chooser's 🌐 and
- * text-size-chooser's "A".
+ * monochrome alongside theme-picker's ◑, locale-picker's 🌐 and
+ * text-size-picker's "A".
  */
 export const BLACK_RIGHTWARDS_ARROWHEAD = "\u27A4";
 
@@ -62,7 +62,9 @@ export type ShareEvent = {
 
 /** Is a native share sheet available? SSR-safe. */
 export function canShareNatively(): boolean {
-  return typeof navigator !== "undefined" && typeof navigator.share === "function";
+  return (
+    typeof navigator !== "undefined" && typeof navigator.share === "function"
+  );
 }
 
 /** Is an async clipboard available? SSR-safe. */
@@ -75,9 +77,9 @@ export function canCopy(): boolean {
 
 let uid = 0;
 /** Stable per-instance id prefix; SSR-safe (no Math.random / Date.now). */
-export function nextShareChooserId(): string {
+export function nextSharePickerId(): string {
   uid += 1;
-  return `share-chooser-${uid}`;
+  return `share-picker-${uid}`;
 }
 
 /**
@@ -85,21 +87,21 @@ export function nextShareChooserId(): string {
  * `let-` variables:
  *
  * ```html
- * <lily-share-chooser label="Share">
- *   <ng-template lilyShareChooserIcon let-args>{{ args.open ? "×" : "➤" }}</ng-template>
- * </lily-share-chooser>
+ * <lily-share-picker label="Share">
+ *   <ng-template lilySharePickerIcon let-args>{{ args.open ? "×" : "➤" }}</ng-template>
+ * </lily-share-picker>
  * ```
  *
  * The component queries any projected `<ng-template>`, so the marker is
  * for type-checking and readability, not for matching.
  */
 @Directive({
-  selector: "ng-template[lilyShareChooserIcon]",
+  selector: "ng-template[lilySharePickerIcon]",
   standalone: true,
 })
-export class ShareChooserIcon {
+export class SharePickerIcon {
   static ngTemplateContextGuard(
-    _dir: ShareChooserIcon,
+    _dir: SharePickerIcon,
     _ctx: unknown,
   ): _ctx is ChildArgs & { $implicit: ChildArgs } {
     return true;
@@ -107,7 +109,7 @@ export class ShareChooserIcon {
 }
 
 /**
- * ShareChooser — a headless share control.
+ * SharePicker — a headless share control.
  *
  * A single-glyph button (➤) that opens the **native share sheet** where
  * the browser provides one, and otherwise a disclosure list of
@@ -118,7 +120,7 @@ export class ShareChooserIcon {
  * `spec/index.md` for the full contract.
  */
 @Component({
-  selector: "lily-share-chooser",
+  selector: "lily-share-picker",
   standalone: true,
   imports: [NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -128,13 +130,13 @@ export class ShareChooserIcon {
   template: `
     <div
       #rootEl
-      class="share-chooser {{ className() }}"
+      class="share-picker {{ className() }}"
       (focusout)="onRootFocusOut($event)"
     >
       <button
         #buttonEl
         type="button"
-        class="share-chooser-button"
+        class="share-picker-button"
         [attr.aria-label]="label() || null"
         [attr.aria-expanded]="open()"
         [attr.aria-controls]="listId"
@@ -147,24 +149,24 @@ export class ShareChooserIcon {
             [ngTemplateOutletContext]="childContext()"
           />
         } @else {
-          <span class="share-chooser-icon" aria-hidden="true">{{ glyph }}</span>
+          <span class="share-picker-icon" aria-hidden="true">{{ glyph }}</span>
         }
       </button>
 
       <ul
         #listEl
-        class="share-chooser-list"
+        class="share-picker-list"
         [id]="listId"
         [attr.hidden]="open() ? null : ''"
         (keydown)="onListKeydown($event)"
       >
         @for (target of targets(); track target.id) {
-          <li class="share-chooser-list-item">
+          <li class="share-picker-list-item">
             <!-- A real link, not role="menuitem": these ARE navigation,
                  and menuitem would strip middle-click, open-in-new-tab
                  and copy-link-address. -->
             <a
-              class="share-chooser-target"
+              class="share-picker-target"
               [attr.data-target-id]="target.id"
               [attr.href]="hrefFor(target)"
               [attr.target]="target.newTab === false ? null : '_blank'"
@@ -176,8 +178,12 @@ export class ShareChooserIcon {
         }
 
         @if (copyLabel()) {
-          <li class="share-chooser-list-item">
-            <button type="button" class="share-chooser-copy" (click)="copyUrl()">
+          <li class="share-picker-list-item">
+            <button
+              type="button"
+              class="share-picker-copy"
+              (click)="copyUrl()"
+            >
               {{ copyLabel() }}
             </button>
           </li>
@@ -187,11 +193,11 @@ export class ShareChooserIcon {
       <!-- Copying gives no visual feedback of its own, so the outcome is
            announced. Empty until something happens, so it stays silent on
            load; aria-live announces mutations only. -->
-      <p class="share-chooser-status" aria-live="polite">{{ status() }}</p>
+      <p class="share-picker-status" aria-live="polite">{{ status() }}</p>
     </div>
   `,
 })
-export class ShareChooser {
+export class SharePicker {
   /** Accessible name for the button and the list. */
   readonly label = input.required<string>();
   /** Destinations to offer. Empty is valid when `copyLabel` is set. */
@@ -231,14 +237,16 @@ export class ShareChooser {
   /** Projected icon template; replaces the default glyph when supplied. */
   protected readonly iconTemplate = contentChild(TemplateRef);
 
-  private readonly rootRef = viewChild.required<ElementRef<HTMLDivElement>>("rootEl");
+  private readonly rootRef =
+    viewChild.required<ElementRef<HTMLDivElement>>("rootEl");
   private readonly buttonRef =
     viewChild.required<ElementRef<HTMLButtonElement>>("buttonEl");
-  private readonly listRef = viewChild.required<ElementRef<HTMLUListElement>>("listEl");
+  private readonly listRef =
+    viewChild.required<ElementRef<HTMLUListElement>>("listEl");
 
   protected readonly glyph = BLACK_RIGHTWARDS_ARROWHEAD;
 
-  private readonly baseId = nextShareChooserId();
+  private readonly baseId = nextSharePickerId();
   protected readonly listId = `${this.baseId}-list`;
 
   protected readonly open = signal(false);
@@ -268,7 +276,7 @@ export class ShareChooser {
   private items(): HTMLElement[] {
     return Array.from(
       this.listRef().nativeElement.querySelectorAll<HTMLElement>(
-        ".share-chooser-target, .share-chooser-copy",
+        ".share-picker-target, .share-picker-copy",
       ),
     );
   }

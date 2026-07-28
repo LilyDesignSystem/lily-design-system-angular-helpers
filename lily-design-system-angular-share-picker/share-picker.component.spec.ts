@@ -3,14 +3,14 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
-  ShareChooser,
-  ShareChooserIcon,
+  SharePicker,
+  SharePickerIcon,
   BLACK_RIGHTWARDS_ARROWHEAD,
   canCopy,
   canShareNatively,
-  nextShareChooserId,
+  nextSharePickerId,
   type ShareTarget,
-} from "./share-chooser.component";
+} from "./share-picker.component";
 
 const URL_UNDER_TEST = "https://example.test/article";
 
@@ -33,7 +33,10 @@ function flush(): Promise<void> {
 }
 
 /** Install a fake async clipboard; returns the writes and a restore fn. */
-function stubClipboard(succeed = true): { writes: string[]; restore: () => void } {
+function stubClipboard(succeed = true): {
+  writes: string[];
+  restore: () => void;
+} {
   const original = (navigator as any).clipboard;
   const writes: string[] = [];
   Object.defineProperty(navigator, "clipboard", {
@@ -88,9 +91,11 @@ function stubNativeShare(behaviour: "resolve" | "reject" = "resolve") {
 /** Fixtures created by a test, destroyed after it so listeners unwind. */
 let fixtures: ComponentFixture<unknown>[] = [];
 
-/** Create + render a ShareChooser with the supplied inputs. */
-function mount(inputs: Record<string, unknown> = {}): ComponentFixture<ShareChooser> {
-  const fixture = TestBed.createComponent(ShareChooser);
+/** Create + render a SharePicker with the supplied inputs. */
+function mount(
+  inputs: Record<string, unknown> = {},
+): ComponentFixture<SharePicker> {
+  const fixture = TestBed.createComponent(SharePicker);
   fixture.componentRef.setInput("label", "Share");
   fixture.componentRef.setInput("targets", TARGETS);
   fixture.componentRef.setInput("url", URL_UNDER_TEST);
@@ -102,32 +107,37 @@ function mount(inputs: Record<string, unknown> = {}): ComponentFixture<ShareChoo
   return fixture;
 }
 
-function q<T extends Element>(fixture: ComponentFixture<unknown>, sel: string): T {
+function q<T extends Element>(
+  fixture: ComponentFixture<unknown>,
+  sel: string,
+): T {
   return fixture.nativeElement.querySelector(sel) as T;
 }
 
 function trigger(fixture: ComponentFixture<unknown>): HTMLButtonElement {
-  return q<HTMLButtonElement>(fixture, ".share-chooser-button");
+  return q<HTMLButtonElement>(fixture, ".share-picker-button");
 }
 
 function list(fixture: ComponentFixture<unknown>): HTMLUListElement {
-  return q<HTMLUListElement>(fixture, ".share-chooser-list");
+  return q<HTMLUListElement>(fixture, ".share-picker-list");
 }
 
 function links(fixture: ComponentFixture<unknown>): HTMLAnchorElement[] {
   return Array.from(
-    fixture.nativeElement.querySelectorAll(".share-chooser-target"),
+    fixture.nativeElement.querySelectorAll(".share-picker-target"),
   ) as HTMLAnchorElement[];
 }
 
 function items(fixture: ComponentFixture<unknown>): HTMLElement[] {
   return Array.from(
-    fixture.nativeElement.querySelectorAll(".share-chooser-target, .share-chooser-copy"),
+    fixture.nativeElement.querySelectorAll(
+      ".share-picker-target, .share-picker-copy",
+    ),
   ) as HTMLElement[];
 }
 
 function status(fixture: ComponentFixture<unknown>): HTMLElement {
-  return q<HTMLElement>(fixture, ".share-chooser-status");
+  return q<HTMLElement>(fixture, ".share-picker-status");
 }
 
 /** Dispatch a bubbling keydown and re-render. */
@@ -169,7 +179,7 @@ afterEach(() => {
   delete (navigator as any).clipboard;
 });
 
-describe("ShareChooser — markup contract (§4.2, §7.1–§7.6)", () => {
+describe("SharePicker — markup contract (§4.2, §7.1–§7.6)", () => {
   test("§7.1 renders a disclosure button controlling a list", () => {
     const fixture = mount();
     const btn = trigger(fixture);
@@ -183,34 +193,34 @@ describe("ShareChooser — markup contract (§4.2, §7.1–§7.6)", () => {
     expect(list(fixture).tagName).toBe("UL");
   });
 
-  test("§4.2 the trigger's class hook is share-chooser-button", () => {
+  test("§4.2 the trigger's class hook is share-picker-button", () => {
     const fixture = mount();
     expect(trigger(fixture)).toBeTruthy();
     expect(trigger(fixture).tagName).toBe("BUTTON");
     // The retired `share-button-trigger` hook must not linger.
-    expect(q(fixture, ".share-chooser-trigger")).toBeNull();
+    expect(q(fixture, ".share-picker-trigger")).toBeNull();
   });
 
   test("§4.2 the root carries the base class plus the consumer's class", () => {
     const fixture = mount({ className: "extra" });
-    const root = q<HTMLElement>(fixture, ".share-chooser");
+    const root = q<HTMLElement>(fixture, ".share-picker");
     expect(root.tagName).toBe("DIV");
     expect(root.classList.contains("extra")).toBe(true);
   });
 
   test("§7.1 the button renders ➤, hidden from assistive tech", () => {
     const fixture = mount();
-    const icon = q<HTMLElement>(fixture, ".share-chooser-icon");
+    const icon = q<HTMLElement>(fixture, ".share-picker-icon");
     // U+27A4 BLACK RIGHTWARDS ARROWHEAD
     expect(icon.textContent).toBe("\u27A4");
     expect(BLACK_RIGHTWARDS_ARROWHEAD).toBe("\u27A4");
     expect(icon.getAttribute("aria-hidden")).toBe("true");
   });
 
-  test("§4.3 nextShareChooserId mints unique, stable ids", () => {
-    const a = nextShareChooserId();
-    const b = nextShareChooserId();
-    expect(a).toMatch(/^share-chooser-\d+$/);
+  test("§4.3 nextSharePickerId mints unique, stable ids", () => {
+    const a = nextSharePickerId();
+    const b = nextSharePickerId();
+    expect(a).toMatch(/^share-picker-\d+$/);
     expect(b).not.toBe(a);
   });
 
@@ -241,7 +251,12 @@ describe("ShareChooser — markup contract (§4.2, §7.1–§7.6)", () => {
     const fixture = mount({
       targets: [
         TARGETS[0],
-        { id: "email", label: "Email", href: (u: string) => `mailto:?body=${u}`, newTab: false },
+        {
+          id: "email",
+          label: "Email",
+          href: (u: string) => `mailto:?body=${u}`,
+          newTab: false,
+        },
       ],
     });
     await clickSettled(fixture, trigger(fixture));
@@ -250,10 +265,12 @@ describe("ShareChooser — markup contract (§4.2, §7.1–§7.6)", () => {
     expect(all[1].getAttribute("target")).toBeNull();
   });
 
-  test("§7.3 destinations sit in .share-chooser-list-item children", async () => {
+  test("§7.3 destinations sit in .share-picker-list-item children", async () => {
     const fixture = mount();
     await clickSettled(fixture, trigger(fixture));
-    const li = fixture.nativeElement.querySelectorAll(".share-chooser-list-item");
+    const li = fixture.nativeElement.querySelectorAll(
+      ".share-picker-list-item",
+    );
     expect(li.length).toBe(2);
     expect((li[0] as HTMLElement).tagName).toBe("LI");
   });
@@ -275,23 +292,29 @@ describe("ShareChooser — markup contract (§4.2, §7.1–§7.6)", () => {
       title: "T",
       text: "Body",
       targets: [
-        { id: "x", label: "X", href: (_u: string, _t: string, x: string) => `https://x.test/?t=${x}` },
+        {
+          id: "x",
+          label: "X",
+          href: (_u: string, _t: string, x: string) => `https://x.test/?t=${x}`,
+        },
       ],
     });
     await clickSettled(fixture, trigger(fixture));
-    expect(links(fixture)[0].getAttribute("href")).toBe("https://x.test/?t=Body");
+    expect(links(fixture)[0].getAttribute("href")).toBe(
+      "https://x.test/?t=Body",
+    );
   });
 
   test("§7.5 no copy item renders when copyLabel is absent", async () => {
     const fixture = mount();
     await clickSettled(fixture, trigger(fixture));
-    expect(q(fixture, ".share-chooser-copy")).toBeNull();
+    expect(q(fixture, ".share-picker-copy")).toBeNull();
   });
 
   test("§7.5 the copy item renders when copyLabel is supplied", async () => {
     const fixture = mount({ copyLabel: "Copy link" });
     await clickSettled(fixture, trigger(fixture));
-    const copy = q<HTMLElement>(fixture, ".share-chooser-copy");
+    const copy = q<HTMLElement>(fixture, ".share-picker-copy");
     expect(copy.tagName).toBe("BUTTON");
     expect(copy.getAttribute("type")).toBe("button");
     expect(copy.textContent?.trim()).toBe("Copy link");
@@ -306,14 +329,14 @@ describe("ShareChooser — markup contract (§4.2, §7.1–§7.6)", () => {
   });
 });
 
-describe("ShareChooser — copy to clipboard (§7.7–§7.10)", () => {
+describe("SharePicker — copy to clipboard (§7.7–§7.10)", () => {
   test("§7.7 copying writes the URL and emits copy", async () => {
     const clip = stubClipboard();
     const fixture = mount({ copyLabel: "Copy link" });
     const copied = vi.fn();
     fixture.componentInstance.copy.subscribe(copied);
     await clickSettled(fixture, trigger(fixture));
-    await clickSettled(fixture, q<HTMLElement>(fixture, ".share-chooser-copy"));
+    await clickSettled(fixture, q<HTMLElement>(fixture, ".share-picker-copy"));
     expect(clip.writes).toEqual([URL_UNDER_TEST]);
     expect(copied).toHaveBeenCalledWith(URL_UNDER_TEST);
     clip.restore();
@@ -321,9 +344,12 @@ describe("ShareChooser — copy to clipboard (§7.7–§7.10)", () => {
 
   test("§7.8 a successful copy announces copiedLabel and closes the list", async () => {
     const clip = stubClipboard();
-    const fixture = mount({ copyLabel: "Copy link", copiedLabel: "Link copied" });
+    const fixture = mount({
+      copyLabel: "Copy link",
+      copiedLabel: "Link copied",
+    });
     await clickSettled(fixture, trigger(fixture));
-    await clickSettled(fixture, q<HTMLElement>(fixture, ".share-chooser-copy"));
+    await clickSettled(fixture, q<HTMLElement>(fixture, ".share-picker-copy"));
     expect(status(fixture).textContent?.trim()).toBe("Link copied");
     expect(list(fixture).hasAttribute("hidden")).toBe(true);
     clip.restore();
@@ -337,18 +363,21 @@ describe("ShareChooser — copy to clipboard (§7.7–§7.10)", () => {
       copyFailedLabel: "Could not copy",
     });
     await clickSettled(fixture, trigger(fixture));
-    await clickSettled(fixture, q<HTMLElement>(fixture, ".share-chooser-copy"));
+    await clickSettled(fixture, q<HTMLElement>(fixture, ".share-picker-copy"));
     expect(status(fixture).textContent?.trim()).toBe("Could not copy");
     clip.restore();
   });
 
   test("§7.9 a failed copy does not emit copy, and still closes the list", async () => {
     const clip = stubClipboard(false);
-    const fixture = mount({ copyLabel: "Copy link", copyFailedLabel: "Could not copy" });
+    const fixture = mount({
+      copyLabel: "Copy link",
+      copyFailedLabel: "Could not copy",
+    });
     const copied = vi.fn();
     fixture.componentInstance.copy.subscribe(copied);
     await clickSettled(fixture, trigger(fixture));
-    await clickSettled(fixture, q<HTMLElement>(fixture, ".share-chooser-copy"));
+    await clickSettled(fixture, q<HTMLElement>(fixture, ".share-picker-copy"));
     expect(copied).not.toHaveBeenCalled();
     expect(list(fixture).hasAttribute("hidden")).toBe(true);
     clip.restore();
@@ -357,9 +386,12 @@ describe("ShareChooser — copy to clipboard (§7.7–§7.10)", () => {
   test("§7.10 an absent clipboard API is treated as a failure, not a crash", async () => {
     // No stub: jsdom has no navigator.clipboard at all.
     expect(canCopy()).toBe(false);
-    const fixture = mount({ copyLabel: "Copy link", copyFailedLabel: "Could not copy" });
+    const fixture = mount({
+      copyLabel: "Copy link",
+      copyFailedLabel: "Could not copy",
+    });
     await clickSettled(fixture, trigger(fixture));
-    await clickSettled(fixture, q<HTMLElement>(fixture, ".share-chooser-copy"));
+    await clickSettled(fixture, q<HTMLElement>(fixture, ".share-picker-copy"));
     expect(status(fixture).textContent?.trim()).toBe("Could not copy");
   });
 
@@ -371,7 +403,7 @@ describe("ShareChooser — copy to clipboard (§7.7–§7.10)", () => {
   });
 });
 
-describe("ShareChooser — native share sheet (§7.11–§7.14)", () => {
+describe("SharePicker — native share sheet (§7.11–§7.14)", () => {
   test("§7.11 canShareNatively reflects navigator.share", () => {
     expect(canShareNatively()).toBe(false);
     const nat = stubNativeShare();
@@ -385,7 +417,9 @@ describe("ShareChooser — native share sheet (§7.11–§7.14)", () => {
     const shared = vi.fn();
     fixture.componentInstance.nativeShare.subscribe(shared);
     await clickSettled(fixture, trigger(fixture));
-    expect(nat.calls).toEqual([{ url: URL_UNDER_TEST, title: "Hello", text: "Body" }]);
+    expect(nat.calls).toEqual([
+      { url: URL_UNDER_TEST, title: "Hello", text: "Body" },
+    ]);
     expect(shared).toHaveBeenCalledWith(URL_UNDER_TEST);
     // The list must NOT also open.
     expect(list(fixture).hasAttribute("hidden")).toBe(true);
@@ -438,10 +472,10 @@ describe("ShareChooser — native share sheet (§7.11–§7.14)", () => {
   });
 });
 
-describe("ShareChooser — keyboard and dismissal (§7.15–§7.19)", () => {
+describe("SharePicker — keyboard and dismissal (§7.15–§7.19)", () => {
   async function openList(
     inputs: Record<string, unknown> = { copyLabel: "Copy link" },
-  ): Promise<ComponentFixture<ShareChooser>> {
+  ): Promise<ComponentFixture<SharePicker>> {
     const fixture = mount(inputs);
     await clickSettled(fixture, trigger(fixture));
     return fixture;
@@ -458,7 +492,7 @@ describe("ShareChooser — keyboard and dismissal (§7.15–§7.19)", () => {
     await flush();
     fixture.detectChanges();
     expect(list(fixture).hasAttribute("hidden")).toBe(false);
-    expect(document.activeElement?.className).toContain("share-chooser-target");
+    expect(document.activeElement?.className).toContain("share-picker-target");
   });
 
   test("§7.15 ArrowUp on the closed button opens and focuses the last item", async () => {
@@ -467,7 +501,7 @@ describe("ShareChooser — keyboard and dismissal (§7.15–§7.19)", () => {
     await flush();
     fixture.detectChanges();
     expect(list(fixture).hasAttribute("hidden")).toBe(false);
-    expect(document.activeElement?.className).toContain("share-chooser-copy");
+    expect(document.activeElement?.className).toContain("share-picker-copy");
   });
 
   test("§7.16 ArrowDown moves focus down the list", async () => {
@@ -497,7 +531,8 @@ describe("ShareChooser — keyboard and dismissal (§7.15–§7.19)", () => {
     const all = items(fixture);
     // Exactly `all.length` presses from the first item: clamping lands on
     // the last item, wrapping would land back on the first.
-    for (let i = 0; i < all.length; i++) press(fixture, list(fixture), "ArrowDown");
+    for (let i = 0; i < all.length; i++)
+      press(fixture, list(fixture), "ArrowDown");
     expect(document.activeElement).toBe(all[all.length - 1]);
   });
 
@@ -535,7 +570,10 @@ describe("ShareChooser — keyboard and dismissal (§7.15–§7.19)", () => {
     const shared = vi.fn();
     fixture.componentInstance.share.subscribe(shared);
     await clickSettled(fixture, trigger(fixture));
-    await clickSettled(fixture, q<HTMLElement>(fixture, '[data-target-id="linkedin"]'));
+    await clickSettled(
+      fixture,
+      q<HTMLElement>(fixture, '[data-target-id="linkedin"]'),
+    );
     expect(shared).toHaveBeenCalledWith({
       targetId: "linkedin",
       url: URL_UNDER_TEST,
@@ -582,7 +620,7 @@ describe("ShareChooser — keyboard and dismissal (§7.15–§7.19)", () => {
   });
 });
 
-describe("ShareChooser — url resolution (§7.20–§7.21)", () => {
+describe("SharePicker — url resolution (§7.20–§7.21)", () => {
   test("§7.20 an explicit url input wins", async () => {
     const fixture = mount();
     await clickSettled(fixture, trigger(fixture));
@@ -604,17 +642,23 @@ describe("ShareChooser — url resolution (§7.20–§7.21)", () => {
     const shared = vi.fn();
     fixture.componentInstance.share.subscribe(shared);
     await clickSettled(fixture, trigger(fixture));
-    await clickSettled(fixture, q<HTMLElement>(fixture, '[data-target-id="mastodon"]'));
-    expect(shared).toHaveBeenCalledWith({ targetId: "mastodon", url: location.href });
+    await clickSettled(
+      fixture,
+      q<HTMLElement>(fixture, '[data-target-id="mastodon"]'),
+    );
+    expect(shared).toHaveBeenCalledWith({
+      targetId: "mastodon",
+      url: location.href,
+    });
   });
 });
 
 @Component({
   standalone: true,
-  imports: [ShareChooser, ShareChooserIcon],
+  imports: [SharePicker, SharePickerIcon],
   template: `
-    <lily-share-chooser label="Share" [targets]="targets" [url]="url">
-      <ng-template lilyShareChooserIcon let-args>
+    <lily-share-picker label="Share" [targets]="targets" [url]="url">
+      <ng-template lilySharePickerIcon let-args>
         <span
           data-testid="custom"
           [attr.data-open]="args.open"
@@ -622,7 +666,7 @@ describe("ShareChooser — url resolution (§7.20–§7.21)", () => {
           >custom glyph</span
         >
       </ng-template>
-    </lily-share-chooser>
+    </lily-share-picker>
   `,
 })
 class IconTemplateHost {
@@ -630,7 +674,7 @@ class IconTemplateHost {
   readonly url = URL_UNDER_TEST;
 }
 
-describe("ShareChooser — custom glyph template (§7.22)", () => {
+describe("SharePicker — custom glyph template (§7.22)", () => {
   test("§7.22 a projected ng-template replaces the glyph and receives ChildArgs", async () => {
     const fixture = TestBed.createComponent(IconTemplateHost);
     fixture.detectChanges();
@@ -641,8 +685,10 @@ describe("ShareChooser — custom glyph template (§7.22)", () => {
     const custom = q<HTMLElement>(fixture, '[data-testid="custom"]');
     expect(custom).toBeTruthy();
     // The custom glyph replaces the default ➤ inside the trigger.
-    expect(custom.closest("button")?.className).toContain("share-chooser-button");
-    expect(q(fixture, ".share-chooser-icon")).toBeNull();
+    expect(custom.closest("button")?.className).toContain(
+      "share-picker-button",
+    );
+    expect(q(fixture, ".share-picker-icon")).toBeNull();
     expect(custom.getAttribute("data-open")).toBe("false");
     expect(custom.getAttribute("data-url")).toBe(URL_UNDER_TEST);
   });
@@ -652,8 +698,10 @@ describe("ShareChooser — custom glyph template (§7.22)", () => {
     fixture.detectChanges();
     fixtures.push(fixture);
     await clickSettled(fixture, trigger(fixture));
-    expect(q<HTMLElement>(fixture, '[data-testid="custom"]').getAttribute("data-open")).toBe(
-      "true",
-    );
+    expect(
+      q<HTMLElement>(fixture, '[data-testid="custom"]').getAttribute(
+        "data-open",
+      ),
+    ).toBe("true");
   });
 });

@@ -3,13 +3,13 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
-  LocaleChooser,
+  LocalePicker,
   GLOBE_WITH_MERIDIANS,
   bcp47LocaleTag,
   isRtlLocale,
   localeName,
   matchNavigatorLanguage,
-} from "./locale-chooser.component";
+} from "./locale-picker.component";
 
 const LOCALES = ["en", "en_US", "fr", "fr_CA", "ar"];
 
@@ -25,9 +25,11 @@ function resetRoot(): void {
 /** Fixtures created by a test, destroyed after it so listeners unwind. */
 let fixtures: ComponentFixture<unknown>[] = [];
 
-/** Create + render a LocaleChooser with the supplied inputs. */
-function mount(inputs: Record<string, unknown> = {}): ComponentFixture<LocaleChooser> {
-  const fixture = TestBed.createComponent(LocaleChooser);
+/** Create + render a LocalePicker with the supplied inputs. */
+function mount(
+  inputs: Record<string, unknown> = {},
+): ComponentFixture<LocalePicker> {
+  const fixture = TestBed.createComponent(LocalePicker);
   fixture.componentRef.setInput("label", "Language");
   fixture.componentRef.setInput("locales", LOCALES);
   for (const [key, value] of Object.entries(inputs)) {
@@ -41,28 +43,31 @@ function mount(inputs: Record<string, unknown> = {}): ComponentFixture<LocaleCho
 /** Mount, let the initial-value effect settle, and re-render. */
 async function mountSettled(
   inputs: Record<string, unknown> = {},
-): Promise<ComponentFixture<LocaleChooser>> {
+): Promise<ComponentFixture<LocalePicker>> {
   const fixture = mount(inputs);
   await flush();
   fixture.detectChanges();
   return fixture;
 }
 
-function q<T extends Element>(fixture: ComponentFixture<unknown>, sel: string): T {
+function q<T extends Element>(
+  fixture: ComponentFixture<unknown>,
+  sel: string,
+): T {
   return fixture.nativeElement.querySelector(sel) as T;
 }
 
 function button(fixture: ComponentFixture<unknown>): HTMLButtonElement {
-  return q<HTMLButtonElement>(fixture, ".locale-chooser-button");
+  return q<HTMLButtonElement>(fixture, ".locale-picker-button");
 }
 
 function list(fixture: ComponentFixture<unknown>): HTMLUListElement {
-  return q<HTMLUListElement>(fixture, ".locale-chooser-list");
+  return q<HTMLUListElement>(fixture, ".locale-picker-list");
 }
 
 function options(fixture: ComponentFixture<unknown>): HTMLLIElement[] {
   return Array.from(
-    fixture.nativeElement.querySelectorAll(".locale-chooser-option"),
+    fixture.nativeElement.querySelectorAll(".locale-picker-option"),
   ) as HTMLLIElement[];
 }
 
@@ -109,7 +114,7 @@ afterEach(() => {
   resetRoot();
 });
 
-describe("LocaleChooser — pure helpers (§7.7–§7.12)", () => {
+describe("LocalePicker — pure helpers (§7.7–§7.12)", () => {
   test("§7.7 bcp47LocaleTag converts en_US to en-US", () => {
     expect(bcp47LocaleTag("en_US")).toBe("en-US");
   });
@@ -155,7 +160,7 @@ describe("LocaleChooser — pure helpers (§7.7–§7.12)", () => {
   });
 });
 
-describe("LocaleChooser — markup contract (§4.3, §7.1–§7.6)", () => {
+describe("LocalePicker — markup contract (§4.3, §7.1–§7.6)", () => {
   test("§7.1 renders a button that controls a listbox", () => {
     const fixture = mount();
     const btn = button(fixture);
@@ -171,18 +176,18 @@ describe("LocaleChooser — markup contract (§4.3, §7.1–§7.6)", () => {
 
   test("§7.1 the root is a div carrying the class hook", () => {
     const fixture = mount({ className: "extra" });
-    const root = q<HTMLElement>(fixture, ".locale-chooser");
+    const root = q<HTMLElement>(fixture, ".locale-picker");
     expect(root.tagName).toBe("DIV");
-    expect(root.classList.contains("locale-chooser")).toBe(true);
+    expect(root.classList.contains("locale-picker")).toBe(true);
     expect(root.classList.contains("extra")).toBe(true);
   });
 
   test("§7.1 the button renders the globe glyph, hidden from assistive tech", () => {
     const fixture = mount();
-    const icon = q<HTMLElement>(fixture, ".locale-chooser-icon");
+    const icon = q<HTMLElement>(fixture, ".locale-picker-icon");
     // U+1F310 GLOBE WITH MERIDIANS + U+FE0E VARIATION SELECTOR-15.
     // VS15 forces text presentation so the globe renders monochrome,
-    // matching theme-chooser's U+25D1 rather than the colour-emoji font.
+    // matching theme-picker's U+25D1 rather than the colour-emoji font.
     expect(icon.textContent).toBe("\u{1F310}\uFE0E");
     expect(GLOBE_WITH_MERIDIANS).toBe("\u{1F310}\uFE0E");
     expect(Array.from(GLOBE_WITH_MERIDIANS)).toEqual(["\u{1F310}", "\uFE0E"]);
@@ -234,7 +239,7 @@ describe("LocaleChooser — markup contract (§4.3, §7.1–§7.6)", () => {
     const fixture = mount();
     click(fixture, button(fixture));
     const active = fixture.nativeElement.querySelectorAll(
-      ".locale-chooser-option[data-active]",
+      ".locale-picker-option[data-active]",
     ) as NodeListOf<HTMLElement>;
     expect(active.length).toBe(1);
   });
@@ -270,8 +275,10 @@ describe("LocaleChooser — markup contract (§4.3, §7.1–§7.6)", () => {
   });
 });
 
-describe("LocaleChooser — keyboard contract (APG listbox, §7.24–§7.28)", () => {
-  async function openWith(key: string): Promise<ComponentFixture<LocaleChooser>> {
+describe("LocalePicker — keyboard contract (APG listbox, §7.24–§7.28)", () => {
+  async function openWith(
+    key: string,
+  ): Promise<ComponentFixture<LocalePicker>> {
     const fixture = await mountSettled();
     press(fixture, button(fixture), key);
     await flush();
@@ -447,7 +454,7 @@ describe("LocaleChooser — keyboard contract (APG listbox, §7.24–§7.28)", (
   });
 });
 
-describe("LocaleChooser — locale application (§5.5, §7.13–§7.17)", () => {
+describe("LocalePicker — locale application (§5.5, §7.13–§7.17)", () => {
   test("§7.13 sets target.lang to the BCP 47 form of the resolved initial locale", async () => {
     await mountSettled({ defaultValue: "en_US" });
     expect(document.documentElement.lang).toBe("en-US");
@@ -495,7 +502,9 @@ describe("LocaleChooser — locale application (§5.5, §7.13–§7.17)", () => 
   test("§7.16 the hidden input tracks the selected value", async () => {
     const fixture = await mountSettled({ defaultValue: "en" });
     await pick(fixture, "fr");
-    expect(q<HTMLInputElement>(fixture, 'input[type="hidden"]').value).toBe("fr");
+    expect(q<HTMLInputElement>(fixture, 'input[type="hidden"]').value).toBe(
+      "fr",
+    );
   });
 
   test("§7.17 a custom target receives lang and dir", async () => {
@@ -511,7 +520,7 @@ describe("LocaleChooser — locale application (§5.5, §7.13–§7.17)", () => 
   });
 });
 
-describe("LocaleChooser — initial-value resolution (§5.2, §5.3, §7.18–§7.21)", () => {
+describe("LocalePicker — initial-value resolution (§5.2, §5.3, §7.18–§7.21)", () => {
   test("§7.18 persists to localStorage and reads back on a fresh mount", async () => {
     const fixture = await mountSettled({ storageKey: "lily-locale" });
     await pick(fixture, "fr");
@@ -534,7 +543,10 @@ describe("LocaleChooser — initial-value resolution (§5.2, §5.3, §7.18–§7
   });
 
   test("§7.20 navigator detection resolves exact match", async () => {
-    const original = Object.getOwnPropertyDescriptor(window.navigator, "languages");
+    const original = Object.getOwnPropertyDescriptor(
+      window.navigator,
+      "languages",
+    );
     Object.defineProperty(window.navigator, "languages", {
       configurable: true,
       get: () => ["fr-CA", "fr"],
@@ -544,26 +556,31 @@ describe("LocaleChooser — initial-value resolution (§5.2, §5.3, §7.18–§7
       detectFromNavigator: true,
     });
     expect(document.documentElement.lang).toBe("fr-CA");
-    if (original) Object.defineProperty(window.navigator, "languages", original);
+    if (original)
+      Object.defineProperty(window.navigator, "languages", original);
   });
 
   test("§7.21 navigator detection falls back to language-only match", async () => {
-    const original = Object.getOwnPropertyDescriptor(window.navigator, "languages");
+    const original = Object.getOwnPropertyDescriptor(
+      window.navigator,
+      "languages",
+    );
     Object.defineProperty(window.navigator, "languages", {
       configurable: true,
       get: () => ["fr-CA"],
     });
     await mountSettled({ locales: ["en", "fr"], detectFromNavigator: true });
     expect(document.documentElement.lang).toBe("fr");
-    if (original) Object.defineProperty(window.navigator, "languages", original);
+    if (original)
+      Object.defineProperty(window.navigator, "languages", original);
   });
 });
 
 @Component({
   standalone: true,
-  imports: [LocaleChooser],
+  imports: [LocalePicker],
   template: `
-    <lily-locale-chooser label="Language" [locales]="locales" [value]="'fr'">
+    <lily-locale-picker label="Language" [locales]="locales" [value]="'fr'">
       <ng-template let-args>
         <span
           data-testid="custom"
@@ -573,19 +590,19 @@ describe("LocaleChooser — initial-value resolution (§5.2, §5.3, §7.18–§7
           >custom glyph</span
         >
       </ng-template>
-    </lily-locale-chooser>
+    </lily-locale-picker>
   `,
 })
 class IconTemplateHost {
   readonly locales = LOCALES;
 }
 
-describe("LocaleChooser — custom icon template (§7.22–§7.23)", () => {
+describe("LocalePicker — custom icon template (§7.22–§7.23)", () => {
   test("§7.22 className is appended to the root div", () => {
     const fixture = mount({ className: "extra" });
-    expect(q<HTMLElement>(fixture, ".locale-chooser").classList.contains("extra")).toBe(
-      true,
-    );
+    expect(
+      q<HTMLElement>(fixture, ".locale-picker").classList.contains("extra"),
+    ).toBe(true);
   });
 
   test("§7.23 a projected ng-template replaces the glyph and receives ChildArgs", async () => {
@@ -598,10 +615,16 @@ describe("LocaleChooser — custom icon template (§7.22–§7.23)", () => {
     const custom = q<HTMLElement>(fixture, '[data-testid="custom"]');
     expect(custom).toBeTruthy();
     // The custom glyph replaces the default globe inside the button.
-    expect(custom.closest("button")?.className).toContain("locale-chooser-button");
-    expect(fixture.nativeElement.querySelector(".locale-chooser-icon")).toBeNull();
+    expect(custom.closest("button")?.className).toContain(
+      "locale-picker-button",
+    );
+    expect(
+      fixture.nativeElement.querySelector(".locale-picker-icon"),
+    ).toBeNull();
     expect(custom.getAttribute("data-open")).toBe("false");
     expect(custom.getAttribute("data-value")).toBe("fr");
-    expect(custom.getAttribute("data-label-en-us")).toBe("English (United States)");
+    expect(custom.getAttribute("data-label-en-us")).toBe(
+      "English (United States)",
+    );
   });
 });

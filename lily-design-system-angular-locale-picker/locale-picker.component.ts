@@ -29,7 +29,7 @@ import {
  *
  * VS15 requests *text* presentation. Without it the browser picks the
  * colour-emoji font and the globe renders blue, which does not match
- * theme-chooser's monochrome ◑ — the two controls sit next to each
+ * theme-picker's monochrome ◑ — the two controls sit next to each
  * other in a page header and should read as one set.
  */
 export const GLOBE_WITH_MERIDIANS = "\u{1F310}\uFE0E";
@@ -109,9 +109,9 @@ export function matchNavigatorLanguage(
 
 let uid = 0;
 /** Stable per-instance id prefix; SSR-safe (no Math.random / Date.now). */
-export function nextLocaleChooserId(): string {
+export function nextLocalePickerId(): string {
   uid += 1;
-  return `locale-chooser-${uid}`;
+  return `locale-picker-${uid}`;
 }
 
 /**
@@ -119,21 +119,21 @@ export function nextLocaleChooserId(): string {
  * `let-` variables:
  *
  * ```html
- * <lily-locale-chooser ...>
- *   <ng-template lilyLocaleChooserIcon let-args>{{ args.labelFor(args.value) }}</ng-template>
- * </lily-locale-chooser>
+ * <lily-locale-picker ...>
+ *   <ng-template lilyLocalePickerIcon let-args>{{ args.labelFor(args.value) }}</ng-template>
+ * </lily-locale-picker>
  * ```
  *
  * The component queries any projected `<ng-template>`, so the marker is
  * for type-checking and readability, not for matching.
  */
 @Directive({
-  selector: "ng-template[lilyLocaleChooserIcon]",
+  selector: "ng-template[lilyLocalePickerIcon]",
   standalone: true,
 })
-export class LocaleChooserIcon {
+export class LocalePickerIcon {
   static ngTemplateContextGuard(
-    _dir: LocaleChooserIcon,
+    _dir: LocalePickerIcon,
     _ctx: unknown,
   ): _ctx is ChildArgs & { $implicit: ChildArgs } {
     return true;
@@ -141,7 +141,7 @@ export class LocaleChooserIcon {
 }
 
 /**
- * LocaleChooser — `lang` + `dir` locale chooser.
+ * LocalePicker — `lang` + `dir` locale picker.
  *
  * Renders an icon button that opens a WAI-ARIA APG listbox of locales. On
  * every locale change the component writes `lang` (and, by default, `dir`)
@@ -149,7 +149,7 @@ export class LocaleChooserIcon {
  * for the full contract.
  */
 @Component({
-  selector: "lily-locale-chooser",
+  selector: "lily-locale-picker",
   standalone: true,
   imports: [NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -159,7 +159,7 @@ export class LocaleChooserIcon {
   template: `
     <div
       #rootEl
-      class="locale-chooser {{ className() }}"
+      class="locale-picker {{ className() }}"
       (focusout)="onRootFocusOut($event)"
     >
       <input type="hidden" [name]="name()" [value]="value()" />
@@ -167,7 +167,7 @@ export class LocaleChooserIcon {
       <button
         #buttonEl
         type="button"
-        class="locale-chooser-button"
+        class="locale-picker-button"
         [attr.aria-label]="label() || null"
         aria-haspopup="listbox"
         [attr.aria-expanded]="open()"
@@ -181,13 +181,15 @@ export class LocaleChooserIcon {
             [ngTemplateOutletContext]="childContext()"
           />
         } @else {
-          <span class="locale-chooser-icon" aria-hidden="true">{{ glyph }}</span>
+          <span class="locale-picker-icon" aria-hidden="true">{{
+            glyph
+          }}</span>
         }
       </button>
 
       <ul
         #listEl
-        class="locale-chooser-list"
+        class="locale-picker-list"
         [id]="listId"
         role="listbox"
         [attr.aria-label]="label() || null"
@@ -198,20 +200,22 @@ export class LocaleChooserIcon {
       >
         @for (locale of locales(); track locale; let i = $index) {
           <li
-            class="locale-chooser-option"
+            class="locale-picker-option"
             [id]="optionId(i)"
             role="option"
             [attr.aria-selected]="locale === value()"
             [attr.data-active]="i === activeIndex() ? '' : null"
             [attr.lang]="tagFor(locale)"
             (click)="choose(i)"
-          >{{ labelFor(locale) }}</li>
+          >
+            {{ labelFor(locale) }}
+          </li>
         }
       </ul>
     </div>
   `,
 })
-export class LocaleChooser {
+export class LocalePicker {
   readonly label = input.required<string>();
   readonly locales = input.required<string[]>();
   readonly value = model<string>("");
@@ -228,14 +232,16 @@ export class LocaleChooser {
   /** Projected icon template; replaces the default glyph when supplied. */
   protected readonly iconTemplate = contentChild(TemplateRef);
 
-  private readonly rootRef = viewChild.required<ElementRef<HTMLDivElement>>("rootEl");
+  private readonly rootRef =
+    viewChild.required<ElementRef<HTMLDivElement>>("rootEl");
   private readonly buttonRef =
     viewChild.required<ElementRef<HTMLButtonElement>>("buttonEl");
-  private readonly listRef = viewChild.required<ElementRef<HTMLUListElement>>("listEl");
+  private readonly listRef =
+    viewChild.required<ElementRef<HTMLUListElement>>("listEl");
 
   protected readonly glyph = GLOBE_WITH_MERIDIANS;
 
-  private readonly baseId = nextLocaleChooserId();
+  private readonly baseId = nextLocalePickerId();
   protected readonly listId = `${this.baseId}-list`;
 
   protected readonly open = signal(false);
@@ -276,14 +282,19 @@ export class LocaleChooser {
         if (!initial && sk) {
           try {
             initial =
-              (typeof localStorage !== "undefined" ? localStorage.getItem(sk) : null) ??
-              "";
+              (typeof localStorage !== "undefined"
+                ? localStorage.getItem(sk)
+                : null) ?? "";
           } catch {
             // ignore privacy errors
           }
         }
 
-        if (!initial && this.detectFromNavigator() && typeof navigator !== "undefined") {
+        if (
+          !initial &&
+          this.detectFromNavigator() &&
+          typeof navigator !== "undefined"
+        ) {
           const navLangs =
             navigator.languages && navigator.languages.length > 0
               ? Array.from(navigator.languages)
@@ -365,7 +376,8 @@ export class LocaleChooser {
   private scrollActiveIntoView(): void {
     const i = this.activeIndex();
     if (i < 0) return;
-    const el = this.listRef().nativeElement.children[i] as HTMLElement | undefined;
+    const el = this.listRef().nativeElement.children[i] as
+      HTMLElement | undefined;
     // jsdom does not implement scrollIntoView; call it only if present.
     el?.scrollIntoView?.({ block: "nearest" });
   }
@@ -374,7 +386,9 @@ export class LocaleChooser {
     const count = this.locales().length;
     if (count === 0) return;
     // Clamp rather than wrap, per the APG listbox pattern.
-    this.activeIndex.set(Math.min(Math.max(this.activeIndex() + delta, 0), count - 1));
+    this.activeIndex.set(
+      Math.min(Math.max(this.activeIndex() + delta, 0), count - 1),
+    );
     this.scrollActiveIntoView();
   }
 

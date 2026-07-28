@@ -24,7 +24,7 @@ import {
  * candidate — U+1F5DB DECREASE FONT SIZE SYMBOL — has no real glyph in
  * common font stacks and falls back to a crude bitmap shape, and it
  * means *decrease* rather than *size*. "A" renders in the page's own
- * font on every platform, stays monochrome like theme-chooser's ◑, and
+ * font on every platform, stays monochrome like theme-picker's ◑, and
  * is the conventional text-size affordance.
  */
 export const LATIN_CAPITAL_LETTER_A = "A";
@@ -42,7 +42,7 @@ export type ChildArgs = {
 /**
  * Resolve a size slug to its display label: each hyphen-separated word
  * title-cased, so a slug like "x-large" renders as "X Large". Mirrors
- * `themeName` in theme-chooser and `localeName` in locale-chooser.
+ * `themeName` in theme-picker and `localeName` in locale-picker.
  */
 export function sizeName(size: string): string {
   return size
@@ -53,9 +53,9 @@ export function sizeName(size: string): string {
 
 let uid = 0;
 /** Stable per-instance id prefix; SSR-safe (no Math.random / Date.now). */
-export function nextTextSizeChooserId(): string {
+export function nextTextSizePickerId(): string {
   uid += 1;
-  return `text-size-chooser-${uid}`;
+  return `text-size-picker-${uid}`;
 }
 
 /**
@@ -63,21 +63,21 @@ export function nextTextSizeChooserId(): string {
  * `let-` variables:
  *
  * ```html
- * <lily-text-size-chooser ...>
- *   <ng-template lilyTextSizeChooserIcon let-args>{{ args.labelFor(args.value) }}</ng-template>
- * </lily-text-size-chooser>
+ * <lily-text-size-picker ...>
+ *   <ng-template lilyTextSizePickerIcon let-args>{{ args.labelFor(args.value) }}</ng-template>
+ * </lily-text-size-picker>
  * ```
  *
  * The component queries any projected `<ng-template>`, so the marker is
  * for type-checking and readability, not for matching.
  */
 @Directive({
-  selector: "ng-template[lilyTextSizeChooserIcon]",
+  selector: "ng-template[lilyTextSizePickerIcon]",
   standalone: true,
 })
-export class TextSizeChooserIcon {
+export class TextSizePickerIcon {
   static ngTemplateContextGuard(
-    _dir: TextSizeChooserIcon,
+    _dir: TextSizePickerIcon,
     _ctx: unknown,
   ): _ctx is ChildArgs & { $implicit: ChildArgs } {
     return true;
@@ -85,7 +85,7 @@ export class TextSizeChooserIcon {
 }
 
 /**
- * TextSizeChooser — `data-text-size` text-size chooser.
+ * TextSizePicker — `data-text-size` text-size picker.
  *
  * Renders an icon button that opens a WAI-ARIA APG listbox of sizes. On
  * every size change the component sets `data-text-size="{slug}"` on the
@@ -95,7 +95,7 @@ export class TextSizeChooserIcon {
  * for the full contract.
  */
 @Component({
-  selector: "lily-text-size-chooser",
+  selector: "lily-text-size-picker",
   standalone: true,
   imports: [NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -105,7 +105,7 @@ export class TextSizeChooserIcon {
   template: `
     <div
       #rootEl
-      class="text-size-chooser {{ className() }}"
+      class="text-size-picker {{ className() }}"
       (focusout)="onRootFocusOut($event)"
     >
       <input type="hidden" [name]="name()" [value]="value()" />
@@ -113,7 +113,7 @@ export class TextSizeChooserIcon {
       <button
         #buttonEl
         type="button"
-        class="text-size-chooser-button"
+        class="text-size-picker-button"
         [attr.aria-label]="label() || null"
         aria-haspopup="listbox"
         [attr.aria-expanded]="open()"
@@ -127,13 +127,15 @@ export class TextSizeChooserIcon {
             [ngTemplateOutletContext]="childContext()"
           />
         } @else {
-          <span class="text-size-chooser-icon" aria-hidden="true">{{ glyph }}</span>
+          <span class="text-size-picker-icon" aria-hidden="true">{{
+            glyph
+          }}</span>
         }
       </button>
 
       <ul
         #listEl
-        class="text-size-chooser-list"
+        class="text-size-picker-list"
         [id]="listId"
         role="listbox"
         [attr.aria-label]="label() || null"
@@ -144,19 +146,21 @@ export class TextSizeChooserIcon {
       >
         @for (size of sizes(); track size; let i = $index) {
           <li
-            class="text-size-chooser-option"
+            class="text-size-picker-option"
             [id]="optionId(i)"
             role="option"
             [attr.aria-selected]="size === value()"
             [attr.data-active]="i === activeIndex() ? '' : null"
             (click)="choose(i)"
-          >{{ labelFor(size) }}</li>
+          >
+            {{ labelFor(size) }}
+          </li>
         }
       </ul>
     </div>
   `,
 })
-export class TextSizeChooser {
+export class TextSizePicker {
   readonly label = input.required<string>();
   readonly sizes = input.required<string[]>();
   readonly value = model<string>("");
@@ -171,14 +175,16 @@ export class TextSizeChooser {
   /** Projected icon template; replaces the default glyph when supplied. */
   protected readonly iconTemplate = contentChild(TemplateRef);
 
-  private readonly rootRef = viewChild.required<ElementRef<HTMLDivElement>>("rootEl");
+  private readonly rootRef =
+    viewChild.required<ElementRef<HTMLDivElement>>("rootEl");
   private readonly buttonRef =
     viewChild.required<ElementRef<HTMLButtonElement>>("buttonEl");
-  private readonly listRef = viewChild.required<ElementRef<HTMLUListElement>>("listEl");
+  private readonly listRef =
+    viewChild.required<ElementRef<HTMLUListElement>>("listEl");
 
   protected readonly glyph = LATIN_CAPITAL_LETTER_A;
 
-  private readonly baseId = nextTextSizeChooserId();
+  private readonly baseId = nextTextSizePickerId();
   protected readonly listId = `${this.baseId}-list`;
 
   protected readonly open = signal(false);
@@ -219,8 +225,9 @@ export class TextSizeChooser {
         if (!initial && sk) {
           try {
             initial =
-              (typeof localStorage !== "undefined" ? localStorage.getItem(sk) : null) ??
-              "";
+              (typeof localStorage !== "undefined"
+                ? localStorage.getItem(sk)
+                : null) ?? "";
           } catch {
             // ignore privacy errors
           }
@@ -229,7 +236,8 @@ export class TextSizeChooser {
         if (!initial) {
           const sizes = this.sizes();
           const dv = this.defaultValue();
-          initial = dv || (sizes.includes("medium") ? "medium" : sizes[0]) || "";
+          initial =
+            dv || (sizes.includes("medium") ? "medium" : sizes[0]) || "";
         }
 
         if (initial && initial !== current) {
@@ -291,7 +299,8 @@ export class TextSizeChooser {
   private scrollActiveIntoView(): void {
     const i = this.activeIndex();
     if (i < 0) return;
-    const el = this.listRef().nativeElement.children[i] as HTMLElement | undefined;
+    const el = this.listRef().nativeElement.children[i] as
+      HTMLElement | undefined;
     // jsdom does not implement scrollIntoView; call it only if present.
     el?.scrollIntoView?.({ block: "nearest" });
   }
@@ -300,7 +309,9 @@ export class TextSizeChooser {
     const count = this.sizes().length;
     if (count === 0) return;
     // Clamp rather than wrap, per the APG listbox pattern.
-    this.activeIndex.set(Math.min(Math.max(this.activeIndex() + delta, 0), count - 1));
+    this.activeIndex.set(
+      Math.min(Math.max(this.activeIndex() + delta, 0), count - 1),
+    );
     this.scrollActiveIntoView();
   }
 
@@ -403,7 +414,10 @@ export class TextSizeChooser {
 
   private applySize(slug: string): void {
     if (typeof document === "undefined" || !slug) return;
-    (this.target() ?? document.documentElement).setAttribute("data-text-size", slug);
+    (this.target() ?? document.documentElement).setAttribute(
+      "data-text-size",
+      slug,
+    );
 
     const sk = this.storageKey();
     if (sk) {
